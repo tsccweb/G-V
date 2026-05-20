@@ -13,9 +13,14 @@ export default defineConfig({
         name: 'G>/\\V Worship PWA',
         short_name: 'G>/\\V',
         description: 'Modern worship ministry management and chord rendering.',
+        start_url: '/',
+        scope: '/',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
+        orientation: 'portrait-primary',
+        prefer_related_applications: false,
+        categories: ['productivity'],
         icons: [
           {
             src: '/logo-192.png',
