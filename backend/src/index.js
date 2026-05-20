@@ -29,6 +29,10 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/flows', worshipFlowRoutes);
 app.use('/api/admin', adminRoutes);
 
+app.get('/api', (req, res) => {
+  res.json({ message: 'Psalms API v3' });
+});
+
 app.get('/', (req, res) => {
   res.json({ message: 'Psalms API v3' });
 });
