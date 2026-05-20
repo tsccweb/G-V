@@ -24,6 +24,13 @@
 <body class="bg-slate-900 text-white antialiased">
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(reg => console.log('SW registered:', reg))
+        .catch(err => console.error('SW registration failed:', err));
+    }
+  </script>
 </body>
 
 </html>
