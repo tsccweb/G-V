@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS & AUTH ───────────────────────────────────────────
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  firstName       String           @default("")
+  middleName      String?
+  lastName        String           @default("")
+  phone           String?
+  role            Role             @default(MEMBER)
+  plan            Plan             @default(FREE)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  settings        UserSettings?
+  songs           Song[]
+  services        Service[]
+  lineups         Lineup[]
+  worshipFlows    WorshipFlow[]
+  receivedInvites Invitation[]     @relation("ReceivedInvitations")
+  sentInvites     Invitation[]     @relation("SentInvitations")
+  notifications   Notification[]
+  subRequests     SubscriptionRequest[]
+}
+
+model SubscriptionRequest {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  plan      Plan
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model UserSettings {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id])
+  fontSize    Int     @default(18)
+  fontFamily  String  @default("Inter")
+  bgColor     String  @default("#000000")
+  textColor   String  @default("#ffffff")
+  chordColor  String  @default("#60a5fa")
+  scrollSpeed Int     @default(50)
+}
+
+// ─── SONGS ──────────────────────────────────────────────────
+model Song {
+  id               String             @id @default(uuid())
+  title            String
+  artist           String?
+  lyrics           String?            @db.Text
+  chords           String?            @db.Text
+  key              String?
+  capo             Int                @default(0)
+  bpm              Int?
+  language         String?
+  notes            String?
+  category         String?
+  tags             String[]
+  isFavorite       Boolean            @default(false)
+  userId           String
+  createdBy        User               @relation(fields: [userId], references: [id])
+  serviceItems     ServiceItem[]
+  worshipFlowSongs WorshipFlowSong[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+// ─── SERVICES (Pastor Flow) ─────────────────────────────────
+model Service {
+  id          String        @id @default(uuid())
+  title       String
+  date        DateTime
+  notes       String?
+  userId      String
+  createdBy   User          @relation(fields: [userId], references: [id])
+  items       ServiceItem[]
+  lineup      Lineup[]
+  liveSession LiveSession?
+  worshipFlowId String?     @unique
+  worshipFlow   WorshipFlow? @relation(fields: [worshipFlowId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model ServiceItem {
+  id         String   @id @default(uuid())
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title      String
+  type       String   // INTERCESSION, OPENING_PRAYER, SCRIPTURE, PRAISE_WORSHIP, MESSAGE, OFFERING, CLOSING, BENEDICTION
+  assignedTo String?
+  notes      String?
+  duration   Int?
+  order      Int
+  songId     String?
+  song       Song?    @relation(fields: [songId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ─── WORSHIP FLOW (P&W Leader Flow) ────────────────────────
+model WorshipFlow {
+  id          String            @id @default(uuid())
+  title       String
+  notes       String?
+  status      FlowStatus        @default(DRAFT)
+  userId      String
+  createdBy   User              @relation(fields: [userId], references: [id])
+  songs       WorshipFlowSong[]
+  service     Service?
+  liveSession LiveSession?      @relation("FlowLiveSession")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model WorshipFlowSong {
+  id             String      @id @default(uuid())
+  worshipFlowId  String
+  worshipFlow    WorshipFlow @relation(fields: [worshipFlowId], references: [id], onDelete: Cascade)
+  songId         String
+  song           Song        @relation(fields: [songId], references: [id])
+  order          Int
+  notes          String?
+  assignedLeader String?
+  assignedGuitarist   String?
+  assignedOrganist    String?
+  assignedDrummer     String?
+  assignedVocalists   String[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+// ─── LIVE SESSION ───────────────────────────────────────────
+model LiveSession {
+  id              String       @id @default(uuid())
+  serviceId       String?      @unique
+  service         Service?     @relation(fields: [serviceId], references: [id])
+  worshipFlowId   String?      @unique
+  worshipFlow     WorshipFlow? @relation("FlowLiveSession", fields: [worshipFlowId], references: [id])
+  sessionCode     String       @unique
+  qrCodeData      String?      @db.Text
+  isActive        Boolean      @default(true)
+  currentItemId   String?
+  currentSlide    Int          @default(0)
+  currentScroll   Float        @default(0)
+  isPaused        Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+// ─── TEAM ───────────────────────────────────────────────────
+model Lineup {
+  id        String  @id @default(uuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  role      String
+  status    String  @default("PENDING")
+}
+
+model Invitation {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentInvitations", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedInvitations", fields: [receiverId], references: [id])
+  type       String
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ─── ENUMS ──────────────────────────────────────────────────
+enum Role {
+  ADMIN
+  PASTOR
+  WORSHIP_LEADER
+  MUSICIAN
+  VOCALIST
+  SCRIPTURE_READER
+  PRAYER_LEADER
+  MEDIA_TEAM
+  SOUND_TEAM
+  MEMBER
+}
+
+enum Plan {
+  FREE
+  STANDARD
+  PREMIUM
+}
+
+enum FlowStatus {
+  DRAFT
+  READY
+  LIVE
+  COMPLETED
+}
