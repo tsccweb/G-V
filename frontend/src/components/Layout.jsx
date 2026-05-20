@@ -22,7 +22,7 @@ function Layout({ children }) {
       <aside className="hidden lg:flex flex-col w-64 bg-zinc-900 border-r border-zinc-800">
         <div className="p-6">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-zinc-100 to-zinc-500 bg-clip-text text-transparent">
-            G>/\V
+            {'G>/\\V'}
           </h2>
         </div>
         <nav className="flex-1 px-4 space-y-2">
