@@ -67,8 +67,14 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
+        type: 'classic',
+        /* when using generateSW the purple is 'dev-sw.js' */
+        navigateFallback: 'index.html',
       },
-      injectRegister: 'inline'
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+      },
+      injectRegister: 'auto'
     })
   ],
 })
