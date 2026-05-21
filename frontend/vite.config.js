@@ -11,8 +11,8 @@ export default defineConfig({
       includeAssets: ['logo.png', 'mask-icon.svg', 'screenshot-mobile.png', 'screenshot-desktop.png'],
       manifest: {
         id: 'com.psalms.worship',
-        name: 'G>/\\V Worship PWA',
-        short_name: 'G>/\\V',
+        name: 'Psalms Worship',
+        short_name: 'Psalms',
         description: 'Modern worship ministry management and chord rendering.',
         start_url: '/',
         scope: '/',
