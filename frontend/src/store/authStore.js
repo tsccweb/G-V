@@ -62,6 +62,18 @@ const useAuthStore = create((set) => ({
     }
   },
 
+  googleLogin: async (credential) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post(`${API_URL}/auth/google-login`, { credential });
+      const { user, token } = response.data;
+      localStorage.setItem('token', token);
+      set({ user, token, isLoading: false });
+    } catch (error) {
+      set({ error: error.response?.data?.error || 'Google login failed', isLoading: false });
+    }
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     set({ user: null, token: null });

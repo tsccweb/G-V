@@ -138,6 +138,65 @@ exports.changePassword = async (req, res) => {
   }
 };
 
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client('687528189146-64gpt46kkdipv6rcdeclrn9cuepnqaoj.apps.googleusercontent.com');
+
+exports.googleLogin = async (req, res) => {
+  const { credential } = req.body;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: '687528189146-64gpt46kkdipv6rcdeclrn9cuepnqaoj.apps.googleusercontent.com',
+    });
+    const payload = ticket.getPayload();
+    const { email, given_name, family_name, picture } = payload;
+
+    let user = await prisma.user.findUnique({
+      where: { email },
+      include: { settings: true }
+    });
+
+    if (!user) {
+      // Create new user if they don't exist
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: await bcrypt.hash(Math.random().toString(36), 10), // Random password for social logins
+          firstName: given_name || 'Google',
+          lastName: family_name || 'User',
+          role: 'MEMBER',
+          plan: 'FREE',
+          avatarUrl: picture,
+          settings: { create: {} }
+        },
+        include: { settings: true }
+      });
+    } else {
+      // Update existing user info if needed
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          jwtVersion: { increment: 1 },
+          avatarUrl: picture || user.avatarUrl
+        },
+        include: { settings: true }
+      });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, role: user.role, plan: user.plan, jwtVersion: user.jwtVersion },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const { password: _, ...safeUser } = user;
+    res.json({ user: safeUser, token });
+  } catch (error) {
+    console.error('[AuthController] Google Login Error:', error);
+    res.status(500).json({ error: 'Google login failed', details: error.message });
+  }
+};
+
 exports.getUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany({

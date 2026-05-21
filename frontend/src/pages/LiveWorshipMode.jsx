@@ -180,19 +180,31 @@ function LiveWorshipMode() {
     }
   }, [session, isHosting]);
 
-  // Auto-Scroll Logic
+  // Auto-Scroll Logic (Smooth requestAnimationFrame version)
   useEffect(() => {
-    let scrollTimer;
-    if (!isPaused) {
-      // speed 1 = 100ms, speed 10 = 10ms
-      const interval = Math.max(10, 110 - (scrollSpeed * 10));
-      scrollTimer = setInterval(() => {
-        if (scrollRef.current && !isJumping.current) {
-          scrollRef.current.scrollBy(0, 1);
-        }
-      }, interval);
-    }
-    return () => clearInterval(scrollTimer);
+    if (isPaused) return;
+
+    let lastTime = performance.now();
+    let frame;
+
+    const scroll = (currentTime) => {
+      const deltaTime = currentTime - lastTime;
+      
+      // Speed calculation: Quadratic scale for better range
+      // 1: ~15px/s, 5: ~135px/s, 10: ~510px/s
+      const pixelsPerSecond = Math.pow(scrollSpeed, 2) * 5 + 10;
+      const distance = (pixelsPerSecond * deltaTime) / 1000;
+      
+      if (scrollRef.current && !isJumping.current) {
+        scrollRef.current.scrollBy(0, distance);
+      }
+      
+      lastTime = currentTime;
+      frame = requestAnimationFrame(scroll);
+    };
+
+    frame = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(frame);
   }, [isPaused, scrollSpeed]);
 
   // Handlers

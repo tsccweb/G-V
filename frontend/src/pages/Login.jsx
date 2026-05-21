@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+import { GoogleLogin } from '@react-oauth/google';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -58,6 +59,29 @@ function Login() {
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-zinc-800"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-zinc-900 px-2 text-zinc-500">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={credentialResponse => {
+                googleLogin(credentialResponse.credential);
+              }}
+              onError={() => {
+                console.log('Login Failed');
+              }}
+              theme="dark"
+              shape="pill"
+              fullWidth
+            />
+          </div>
         </form>
 
         <p className="text-center text-sm text-zinc-400">
