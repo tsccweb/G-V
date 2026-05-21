@@ -15,6 +15,7 @@ model User {
   firstName       String           @default("")
   middleName      String?
   lastName        String           @default("")
+  avatarUrl       String?
   phone           String?
   role            Role             @default(MEMBER)
   plan            Plan             @default(FREE)
