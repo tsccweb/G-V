@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prisma');
+const axios = require('axios');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here';
 
@@ -113,6 +114,89 @@ exports.updateMe = async (req, res) => {
     res.status(500).json({ error: 'Failed to update profile' });
   }
 };
+
+// ─── FORGOT PASSWORD ─────────────────────────────────────────
+
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.authProvider === 'GOOGLE') return res.status(400).json({ error: 'Please use Google Login for this account' });
+
+    // Generate 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60000); // 15 mins
+
+    // Save/Update OTP
+    await prisma.oTP.deleteMany({ where: { email } });
+    await prisma.oTP.create({
+      data: { email, code: otpCode, expiresAt }
+    });
+
+    // Send via Brevo
+    await axios.post('https://api.brevo.com/v3/smtp/email', {
+      sender: { name: 'Psalms Worship', email: 'no-reply@psalms-worship.com' },
+      to: [{ email }],
+      subject: 'Your Password Reset Code',
+      htmlContent: `
+        <div style="font-family: sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #000; text-align: center;">Reset Password</h2>
+          <p style="color: #666; font-size: 14px; text-align: center;">Use the code below to reset your password. This code expires in 15 minutes.</p>
+          <div style="background: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; border-radius: 8px; margin: 20px 0;">
+            ${otpCode}
+          </div>
+          <p style="color: #999; font-size: 11px; text-align: center;">If you didn't request this, please ignore this email.</p>
+        </div>
+      `
+    }, {
+      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' }
+    });
+
+    res.json({ message: 'OTP sent to your email' });
+  } catch (error) {
+    console.error('Forgot Password Error:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+};
+
+exports.verifyOTP = async (req, res) => {
+  const { email, code } = req.body;
+  try {
+    const otp = await prisma.oTP.findFirst({
+      where: { email, code, expiresAt: { gt: new Date() } }
+    });
+    if (!otp) return res.status(400).json({ error: 'Invalid or expired code' });
+    res.json({ message: 'OTP verified', valid: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Verification failed' });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, code, newPassword } = req.body;
+  try {
+    // Re-verify OTP one last time
+    const otp = await prisma.oTP.findFirst({
+      where: { email, code, expiresAt: { gt: new Date() } }
+    });
+    if (!otp) return res.status(400).json({ error: 'Session expired. Please try again.' });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword, jwtVersion: { increment: 1 } }
+    });
+
+    // Cleanup
+    await prisma.oTP.deleteMany({ where: { email } });
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+};
+
 exports.changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {

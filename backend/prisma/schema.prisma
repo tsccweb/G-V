@@ -199,6 +199,14 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
+model OTP {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 // ─── ENUMS ──────────────────────────────────────────────────
 enum Role {
   ADMIN

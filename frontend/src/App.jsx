@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import JoinSession from './pages/JoinSession';
 import SettingsPage from './pages/SettingsPage';
 import AdminDashboard from './pages/AdminDashboard';
+import ForgotPassword from './pages/ForgotPassword';
 import Layout from './components/Layout';
 import InstallPrompt from './components/InstallPrompt';
 import { useAppBadge } from './hooks/useAppBadge';
@@ -58,6 +59,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
             <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
+            <Route path="/forgot-password" element={!user ? <ForgotPassword /> : <Navigate to="/" />} />
             <Route path="/join" element={<JoinSession />} />
             <Route path="/live/:id" element={<LiveWorshipMode />} />
 

@@ -86,7 +86,7 @@ function Login() {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center px-1">
                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Password</label>
-                <button type="button" className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-widest">Forgot?</button>
+                <Link to="/forgot-password" size="sm" className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-widest cursor-pointer">Forgot?</Link>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-white transition-colors" size={18} />

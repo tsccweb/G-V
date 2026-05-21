@@ -74,6 +74,42 @@ const useAuthStore = create((set) => ({
     }
   },
 
+  forgotPassword: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(`${API_URL}/auth/forgot-password`, { email });
+      set({ isLoading: false });
+      return true;
+    } catch (error) {
+      set({ error: error.response?.data?.error || 'Failed to send OTP', isLoading: false });
+      return false;
+    }
+  },
+
+  verifyOTP: async (email, code) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post(`${API_URL}/auth/verify-otp`, { email, code });
+      set({ isLoading: false });
+      return response.data.valid;
+    } catch (error) {
+      set({ error: error.response?.data?.error || 'Invalid OTP', isLoading: false });
+      return false;
+    }
+  },
+
+  resetPassword: async (email, code, newPassword) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(`${API_URL}/auth/reset-password`, { email, code, newPassword });
+      set({ isLoading: false });
+      return true;
+    } catch (error) {
+      set({ error: error.response?.data?.error || 'Failed to reset password', isLoading: false });
+      return false;
+    }
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     set({ user: null, token: null });
