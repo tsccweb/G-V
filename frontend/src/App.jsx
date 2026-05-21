@@ -17,6 +17,7 @@ import JoinSession from './pages/JoinSession';
 import SettingsPage from './pages/SettingsPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Layout from './components/Layout';
+import InstallPrompt from './components/InstallPrompt';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
@@ -48,6 +49,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="min-h-screen bg-black text-white">
+          <InstallPrompt />
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
