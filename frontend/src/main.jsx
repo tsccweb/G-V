@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import './index.css'
+import { registerSW } from 'virtual:pwa-register'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 
 // Register Service Worker and handle updates

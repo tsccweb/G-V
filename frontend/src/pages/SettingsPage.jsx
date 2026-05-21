@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSettings, updateSettings, resetSettings } from '../services/settingsService';
 import { updateProfile, changePassword } from '../services/authService';
 import { getPendingRequest } from '../services/subscriptionService';
-import { LogOut, User, Plus, Globe, Crown, Lock, Eye, EyeOff, X, ChevronRight, Paintbrush, KeyRound, ShieldCheck } from 'lucide-react';
+import { LogOut, User, Plus, Globe, Crown, Lock, Eye, EyeOff, X, ChevronRight, Paintbrush, KeyRound, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
@@ -88,6 +89,13 @@ export default function SettingsPage() {
   const [pwMsg, setPwMsg] = useState(null);
   const [showPw, setShowPw] = useState(false);
   const [saveMsg, setSaveMsg] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setShowLogoutConfirm(false);
+    navigate('/login');
+  };
 
   /* ── Queries ── */
   const { data: settings, isLoading } = useQuery({ queryKey: ['settings'], queryFn: getSettings });
@@ -271,7 +279,7 @@ export default function SettingsPage() {
         </div>
         <div className="flex items-center justify-between pt-4">
           <p className="text-[11px] text-zinc-500">{user?.email}</p>
-          <button onClick={() => { logout(); navigate('/login'); }}
+          <button onClick={() => setShowLogoutConfirm(true)}
             className="px-4 py-2 bg-red-500/10 text-red-500 text-xs font-bold rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-1.5">
             <LogOut size={13} /> Log out
           </button>
@@ -313,6 +321,48 @@ export default function SettingsPage() {
           </button>
         </div>
       )}
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLogoutConfirm(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] shadow-2xl text-center space-y-6"
+            >
+              <div className="w-16 h-16 bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto text-red-500">
+                <AlertTriangle size={32} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Sign Out?</h3>
+                <p className="text-zinc-500 text-sm mt-2">Are you sure you want to log out of your session?</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-6 py-3 rounded-2xl border border-zinc-800 text-zinc-400 font-bold hover:text-white transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-6 py-3 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-lg shadow-red-500/10 transition-all"
+                >
+                  Logout
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
