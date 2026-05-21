@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, X, Share } from 'lucide-react';
+import { X, Share } from 'lucide-react';
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -79,9 +79,7 @@ export default function InstallPrompt() {
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
         
         <div className="flex items-start gap-4">
-          <div className="bg-emerald-500/10 p-2.5 rounded-xl">
-            <Download className="w-6 h-6 text-emerald-400" />
-          </div>
+          <img src="/logo-192.png" alt="G>/\V" className="w-12 h-12 rounded-xl shadow-md grayscale" />
           
           <div className="flex-1 min-w-0 pr-6">
             <h3 className="font-bold text-base">Install G{'>'}/\\V</h3>
