@@ -12,9 +12,18 @@ const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     
     // Check for active session version using Prisma
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    let user = await prisma.user.findUnique({ where: { id: decoded.userId } });
     if (!user) return res.status(401).json({ error: 'User no longer exists' });
     
+    // Check if subscription has expired
+    if (user.plan !== 'FREE' && user.planExpiresAt && user.planExpiresAt < new Date()) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { plan: 'FREE' }
+      });
+      decoded.plan = 'FREE'; // Override current request permissons
+    }
+
     // Log previous devices out if version does not match
     if (decoded.jwtVersion !== undefined && user.jwtVersion !== decoded.jwtVersion) {
       return res.status(401).json({ error: 'Session expired (logged in on another device)' });

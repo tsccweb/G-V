@@ -1,7 +1,20 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Globally intercept responses to catch device conflict logouts
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && error.response?.data?.error === 'Session expired (logged in on another device)') {
+      toast.error('You were logged out because you logged in on a new device.', { duration: 6000 });
+      useAuthStore.getState().logout();
+    }
+    return Promise.reject(error);
+  }
+);
 
 const useAuthStore = create((set) => ({
   user: null,

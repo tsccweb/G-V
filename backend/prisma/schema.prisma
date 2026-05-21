@@ -21,6 +21,7 @@ model User {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   jwtVersion      Int              @default(0)
+  planExpiresAt   DateTime?
   settings        UserSettings?
   songs           Song[]
   services        Service[]

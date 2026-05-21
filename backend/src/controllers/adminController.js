@@ -86,7 +86,10 @@ exports.handleSubscriptionRequest = async (req, res) => {
     if (status === 'APPROVED') {
       await prisma.user.update({
         where: { id: request.userId },
-        data: { plan: request.plan }
+        data: { 
+          plan: request.plan,
+          planExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        }
       });
     }
 

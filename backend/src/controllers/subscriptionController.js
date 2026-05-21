@@ -14,7 +14,7 @@ exports.updatePlan = async (req, res) => {
     if (plan === 'FREE') {
       const user = await prisma.user.update({
         where: { id: req.user.userId },
-        data: { plan },
+        data: { plan, planExpiresAt: null },
         select: { id: true, email: true, firstName: true, lastName: true, role: true, plan: true }
       });
       return res.json(user);

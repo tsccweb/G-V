@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Zap, Star, ChevronLeft, Loader2, Lock } from 'lucide-react';
+import { Check, Zap, Star, ChevronLeft, Loader2, Lock, MessageCircle } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { getPendingRequest, requestUpgrade } from '../services/subscriptionService';
@@ -16,8 +16,8 @@ const plans = [
   },
   {
     name: 'STANDARD',
-    price: '₱200',
-    period: 'one-time',
+    price: '₱100',
+    period: '/ month',
     icon: Star,
     color: 'bg-emerald-500/10 text-emerald-400',
     popular: true,
@@ -29,6 +29,8 @@ export default function Pricing() {
   const { user, checkAuth } = useAuthStore();
   const navigate = useNavigate();
   const [requestLoading, setRequestLoading] = useState(null);
+  const [showStep1, setShowStep1] = useState(false);
+  const [showStep2, setShowStep2] = useState(false);
 
   const { data: pendingReq, isLoading: pendingLoading } = useQuery({
     queryKey: ['subscription', 'pending'],
@@ -44,7 +46,7 @@ export default function Pricing() {
         await checkAuth();
         navigate('/settings');
       } catch (err) {
-        alert('Failed to update plan');
+        // silently fail
       } finally {
         setRequestLoading(null);
       }
@@ -54,13 +56,32 @@ export default function Pricing() {
     try {
       setRequestLoading(plan);
       await requestUpgrade(plan);
-      alert('Subscription request submitted! An admin will review it soon.');
-      navigate('/settings');
+      // Show the first modal instead of alert
+      setShowStep1(true);
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to submit request');
+      // If already requested, still show the DM flow
+      if (err.response?.data?.error?.includes('pending')) {
+        setShowStep1(true);
+      }
     } finally {
       setRequestLoading(null);
     }
+  };
+
+  const handleStep1Ok = () => {
+    setShowStep1(false);
+    setShowStep2(true);
+  };
+
+  const handleDmJason = () => {
+    setShowStep2(false);
+    window.open('https://www.facebook.com/messages/t/100000847895989', '_blank');
+    navigate('/settings');
+  };
+
+  const handleMaybeLater = () => {
+    setShowStep2(false);
+    navigate('/settings');
   };
 
   if (pendingLoading) return <div className="flex items-center justify-center h-screen text-zinc-500">Checking subscription status...</div>;
@@ -74,7 +95,7 @@ export default function Pricing() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-black text-white tracking-tight italic">Level Up Your Ministry</h1>
         <p className="text-zinc-500 mt-3 max-w-md mx-auto text-sm">
-          Simple pricing. All features unlocked with a one-time payment of ₱200.
+          Simple pricing. All features unlocked for just ₱100 a month.
         </p>
       </div>
 
@@ -149,8 +170,63 @@ export default function Pricing() {
       </div>
 
       <p className="mt-12 text-center text-[11px] text-zinc-500 font-medium max-w-sm mx-auto leading-relaxed">
-        One-time payment verified manually by ministry admins. After requesting Standard, please contact your ministry head for payment details.
+        Monthly subscription payment is verified manually by ministry admins. After requesting Standard, please contact your ministry head for payment details.
       </p>
+
+      {/* Step 1 Modal: DM Instruction */}
+      {showStep1 && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm p-6 text-center space-y-5 shadow-2xl">
+            <div className="mx-auto w-14 h-14 bg-blue-500/10 text-blue-400 rounded-full flex items-center justify-center">
+              <MessageCircle size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2">Request Submitted!</h3>
+              <p className="text-sm text-zinc-400">
+                Please DM <span className="text-white font-bold">Jason Anthony Trillo</span> on Facebook to complete your subscription payment.
+              </p>
+            </div>
+            <button
+              onClick={handleStep1Ok}
+              className="w-full px-4 py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2 Modal: DM or Maybe Later */}
+      {showStep2 && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm p-6 text-center space-y-5 shadow-2xl">
+            <div className="mx-auto w-14 h-14 bg-blue-500/10 text-blue-400 rounded-full flex items-center justify-center">
+              <MessageCircle size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2">Open Messenger?</h3>
+              <p className="text-sm text-zinc-400">
+                Would you like to message Jason now to finalize your payment?
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleMaybeLater}
+                className="flex-1 px-4 py-3 bg-zinc-800 text-white font-bold rounded-xl hover:bg-zinc-700 transition"
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={handleDmJason}
+                className="flex-1 px-4 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400 transition flex items-center justify-center gap-2"
+              >
+                <MessageCircle size={16} />
+                DM Jason
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
