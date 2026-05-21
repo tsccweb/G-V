@@ -1,11 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { Mail, Check, X, UserPlus, Clock, Users } from 'lucide-react';
+import { 
+  Mail, Check, X, UserPlus, Clock, Users, Shield, 
+  Music, Mic, Star, Headphones, Monitor, Trash2, Send
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import { getServices, inviteToLineup } from '../services/serviceService';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const roleIcons = {
+  MEMBER: <Users size={16} />,
+  MUSICIAN: <Music size={16} />,
+  VOCALIST: <Mic size={16} />,
+  WORSHIP_LEADER: <Star size={16} />,
+  MEDIA_TEAM: <Monitor size={16} />,
+  SOUND_TEAM: <Headphones size={16} />,
+};
 
 function TeamLineup() {
   const { user, token } = useAuthStore();
@@ -16,7 +29,7 @@ function TeamLineup() {
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [inviteMsg, setInviteMsg] = useState(null);
 
-  const { data: invitations, isLoading } = useQuery({
+  const { data: invitations, isLoading: isInvitesLoading } = useQuery({
     queryKey: ['invitations'],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/services/lineup/invitations`, {
@@ -25,11 +38,9 @@ function TeamLineup() {
       return res.data;
     },
     enabled: !!token,
-    refetchOnWindowFocus: true,
-    refetchOnMount: 'always'
   });
 
-  const { data: teamMembers } = useQuery({
+  const { data: teamMembers, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team'],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/services/team`, {
@@ -38,8 +49,6 @@ function TeamLineup() {
       return res.data;
     },
     enabled: !!token,
-    refetchOnWindowFocus: true,
-    refetchOnMount: 'always'
   });
 
   const { data: services } = useQuery({
@@ -59,24 +68,16 @@ function TeamLineup() {
   const inviteMutation = useMutation({
     mutationFn: (data) => inviteToLineup(data),
     onSuccess: () => {
-      setInviteMsg({ ok: true, t: 'Invitation sent ✓' });
+      setInviteMsg({ ok: true, t: 'Invitation sent successfully' });
+      setTimeout(() => setInviteMsg(null), 3000);
       setInviteEmail('');
       setInviteRole('MEMBER');
-      queryClient.invalidateQueries({ queryKey: ['team'] });
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
     },
     onError: (error) => {
       setInviteMsg({ ok: false, t: error.response?.data?.error || 'Failed to send invite' });
     }
   });
-
-  const handleInviteSubmit = () => {
-    if (!inviteEmail || !selectedServiceId) {
-      setInviteMsg({ ok: false, t: 'Please select a service and enter an email.' });
-      return;
-    }
-    inviteMutation.mutate({ serviceId: selectedServiceId, email: inviteEmail, role: inviteRole });
-  };
 
   const respondMutation = useMutation({
     mutationFn: async ({ id, status }) => {
@@ -91,141 +92,247 @@ function TeamLineup() {
     }
   });
 
-  if (isLoading) return <div className="p-8 text-center text-zinc-400">Checking invitations...</div>;
+  const handleInviteSubmit = () => {
+    if (!inviteEmail || !selectedServiceId) {
+      setInviteMsg({ ok: false, t: 'Please select a service and enter an email.' });
+      return;
+    }
+    inviteMutation.mutate({ serviceId: selectedServiceId, email: inviteEmail, role: inviteRole });
+  };
+
+  if (isInvitesLoading || isTeamLoading) return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-white/10 border-t-white rounded-full animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-3xl font-bold text-white">Team & Invitations</h1>
-      </div>
-
-      {showInvite && (
-        <div className="space-y-4 p-6 bg-zinc-900 border border-zinc-800 rounded-3xl">
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4">
-            <label className="flex-1 text-[11px] uppercase tracking-[0.3em] text-zinc-500">
-              Service
-              <select value={selectedServiceId || ''} onChange={e => setSelectedServiceId(e.target.value)}
-                className="mt-2 w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-600">
-                {ownedServices.length === 0 ? (
-                  <option value="">No owned services available</option>
-                ) : ownedServices.map((service) => (
-                  <option key={service.id} value={service.id}>{service.title || service.date}</option>
-                ))}
-              </select>
-            </label>
-            <label className="flex-1 text-[11px] uppercase tracking-[0.3em] text-zinc-500">
-              Email
-              <input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} type="email"
-                placeholder="member@example.com"
-                className="mt-2 w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-600" />
-            </label>
-            <label className="flex-1 text-[11px] uppercase tracking-[0.3em] text-zinc-500">
-              Role
-              <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
-                className="mt-2 w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-zinc-600">
-                <option value="MEMBER">MEMBER</option>
-                <option value="MUSICIAN">MUSICIAN</option>
-                <option value="VOCALIST">VOCALIST</option>
-                <option value="WORSHIP_LEADER">WORSHIP LEADER</option>
-                <option value="MEDIA_TEAM">MEDIA TEAM</option>
-                <option value="SOUND_TEAM">SOUND TEAM</option>
-              </select>
-            </label>
-          </div>
-          {inviteMsg && (
-            <div className={`rounded-2xl px-4 py-3 text-sm font-semibold ${inviteMsg.ok ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-red-500/10 text-red-300 border border-red-500/20'}`}>
-              {inviteMsg.t}
-            </div>
-          )}
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button onClick={handleInviteSubmit}
-              className="w-full px-5 py-3 rounded-2xl bg-white text-black font-bold hover:bg-zinc-200 transition-all disabled:opacity-50"
-              disabled={inviteMutation.isLoading || !ownedServices.length}
-            >
-              {inviteMutation.isLoading ? 'Sending…' : 'Send Invite'}
-            </button>
-            <button onClick={() => setShowInvite(false)}
-              className="w-full px-5 py-3 rounded-2xl border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-          <Mail size={16} />
-          <span>Pending Invitations</span>
-        </h2>
-
-        {invitations?.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4">
-            {invitations.map((invite) => (
-              <div key={invite.id} className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-xl">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-zinc-100/10 text-zinc-300 rounded-2xl flex items-center justify-center">
-                    <Clock size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">{invite.serviceTitle}</h3>
-                    <p className="text-zinc-400">Role: <span className="text-zinc-300 font-bold">{invite.role}</span></p>
-                    <p className="text-xs text-zinc-500 mt-1">Invited by {invite.sender}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0">
-                  <button
-                    onClick={() => respondMutation.mutate({ id: invite.id, status: 'DECLINED' })}
-                    className="flex-1 md:flex-none px-6 py-2 bg-black text-zinc-400 hover:text-white border border-zinc-800 hover:border-red-400/50 rounded-xl transition-all font-bold w-full md:w-auto"
-                  >
-                    Decline
-                  </button>
-                  <button
-                    onClick={() => respondMutation.mutate({ id: invite.id, status: 'ACCEPTED' })}
-                    className="flex-1 md:flex-none px-6 py-2 bg-white hover:bg-zinc-200 text-black rounded-xl shadow-lg shadow-white/5 transition-all font-bold w-full md:w-auto"
-                  >
-                    Accept
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-12 text-center bg-zinc-900 border border-zinc-800 border-dashed rounded-3xl">
-            <p className="text-zinc-500">No pending invitations.</p>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-6">
-        <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-          <Users size={16} />
-          <span>My Team</span>
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {teamMembers?.map((member) => (
-            <div key={member.id} className="flex items-center gap-4 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl">
-              <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center font-bold text-zinc-500">
-                {member.name[0]}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-white">{member.name}</p>
-                <p className="text-xs text-zinc-500">{member.role}</p>
-              </div>
-              <div className={`w-2 h-2 rounded-full ${member.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-600'}`} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <button
-        onClick={() => { setShowInvite(prev => !prev); setInviteMsg(null); }}
-        className="fixed bottom-24 right-6 flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black shadow-[0_18px_40px_rgba(255,255,255,0.18)] transition-all hover:bg-zinc-200 active:scale-95 z-60"
+    <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-12 pb-32">
+      {/* Header Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-2"
       >
-        <UserPlus size={18} />
-        Invite
-      </button>
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">
+          Team & <span className="text-zinc-500">Invitations</span>
+        </h1>
+        <p className="text-zinc-500 max-w-xl">
+          Manage your worship ministry team, send invitations, and track member status across your services.
+        </p>
+      </motion.div>
+
+      {/* Invitations Section */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/50">
+          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
+            <Mail size={14} className="text-emerald-500" />
+            Pending Your Response
+          </h2>
+          <span className="px-2 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500">
+            {invitations?.length || 0} Total
+          </span>
+        </div>
+
+        <AnimatePresence mode="popLayout">
+          {invitations?.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {invitations.map((invite) => (
+                <motion.div
+                  key={invite.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="group relative flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 bg-zinc-900/40 backdrop-blur-md border border-zinc-800/50 rounded-[2rem] hover:border-zinc-700/50 transition-all duration-500"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+                      <Clock size={28} className="text-zinc-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-white">{invite.serviceTitle}</h3>
+                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase rounded-full border border-emerald-500/20">
+                          Invite
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-black/40 rounded-lg border border-zinc-800/50">
+                          <span className="text-zinc-500">{roleIcons[invite.role] || <Users size={14}/>}</span>
+                          <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">{invite.role}</span>
+                        </div>
+                        <span className="text-xs text-zinc-500 italic">by {invite.sender}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-4 md:mt-0">
+                    <button
+                      onClick={() => respondMutation.mutate({ id: invite.id, status: 'DECLINED' })}
+                      className="flex-1 md:flex-none px-6 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-500 font-bold hover:text-red-400 hover:border-red-400/30 transition-all active:scale-95"
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={() => respondMutation.mutate({ id: invite.id, status: 'ACCEPTED' })}
+                      className="flex-1 md:flex-none px-8 py-3 rounded-2xl bg-white text-black font-black hover:bg-zinc-200 shadow-xl shadow-white/5 transition-all active:scale-95 translate-y-[-2px] hover:translate-y-[-4px]"
+                    >
+                      Accept Invite
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-16 text-center bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-[3rem]"
+            >
+              <div className="w-16 h-16 bg-zinc-900/50 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-zinc-800">
+                <Mail size={32} className="text-zinc-700" />
+              </div>
+              <p className="text-zinc-500 font-medium">No pending invitations at the moment.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
+
+      {/* Team Members Section */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/50">
+          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
+            <Shield size={14} className="text-blue-500" />
+            Active Team Members
+          </h2>
+          <span className="px-2 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500">
+            {teamMembers?.length || 0} Members
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AnimatePresence>
+            {teamMembers?.map((member, idx) => (
+              <motion.div
+                key={member.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="group p-5 bg-zinc-900/30 border border-zinc-800/50 rounded-[2rem] hover:bg-zinc-900/50 hover:border-zinc-700/50 transition-all duration-300"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center font-black text-xl text-zinc-600 group-hover:text-white transition-colors duration-500">
+                      {member.name[0]}
+                    </div>
+                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-4 border-zinc-900 ${member.status === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-700'}`} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-white group-hover:text-white transition-colors capitalize">
+                      {member.name}
+                    </h4>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                      {roleIcons[member.role] || <Users size={12}/>}
+                      <span className="text-[10px] font-black uppercase tracking-wider">{member.role}</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </section>
+
+      {/* Invite Floating Panel */}
+      <AnimatePresence>
+        {showInvite && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className="fixed inset-x-4 bottom-24 z-50 md:max-w-2xl md:mx-auto"
+          >
+            <div className="p-8 bg-zinc-950/80 backdrop-blur-2xl border border-white/10 rounded-[3rem] shadow-2xl space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-black text-white">Send New Invitation</h3>
+                <button onClick={() => setShowInvite(false)} className="p-2 hover:bg-white/10 rounded-xl text-zinc-500 hover:text-white transition-all">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Assigned Service</label>
+                  <select 
+                    value={selectedServiceId || ''} 
+                    onChange={e => setSelectedServiceId(e.target.value)}
+                    className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+                  >
+                    {!ownedServices.length && <option value="">No services found</option>}
+                    {ownedServices.map(s => <option key={s.id} value={s.id}>{s.title || s.date}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Team Member Role</label>
+                  <select 
+                    value={inviteRole} 
+                    onChange={e => setInviteRole(e.target.value)}
+                    className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+                  >
+                    {Object.keys(roleIcons).map(role => <option key={role} value={role}>{role}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Member Email</label>
+                  <input 
+                    value={inviteEmail} 
+                    onChange={e => setInviteEmail(e.target.value)}
+                    type="email" 
+                    placeholder="email@worship.com"
+                    className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all"
+                  />
+                </div>
+              </div>
+
+              {inviteMsg && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }} 
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`p-4 rounded-2xl text-xs font-bold border ${inviteMsg.ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}
+                >
+                  {inviteMsg.t}
+                </motion.div>
+              )}
+
+              <button 
+                onClick={handleInviteSubmit}
+                disabled={inviteMutation.isPending || !ownedServices.length}
+                className="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 active:scale-[0.98] shadow-xl shadow-white/5 disabled:opacity-50"
+              >
+                {inviteMutation.isPending ? (
+                  <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Send size={18} />
+                    <span>Deliver Invitation</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Action Button */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => { setShowInvite(true); setInviteMsg(null); }}
+        className="fixed bottom-10 right-10 w-16 h-16 bg-white text-black rounded-3xl flex items-center justify-center shadow-[0_20px_50px_rgba(255,255,255,0.2)] z-[60] hover:bg-zinc-200 transition-colors"
+      >
+        <UserPlus size={28} />
+      </motion.button>
     </div>
   );
 }
