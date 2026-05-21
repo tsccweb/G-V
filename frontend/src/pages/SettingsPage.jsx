@@ -226,38 +226,40 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* 3. Change Password */}
-        <div>
-          <AccordionBtn icon={KeyRound} label="Change Password" description="Update your login credentials"
-            isOpen={openSection === 'password'} onClick={() => toggle('password')} />
-          {openSection === 'password' && (
-            <div className="mt-2 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl space-y-3 animate-in slide-in-from-top-2 duration-200">
-              {pwMsg && (
-                <div className={`px-4 py-2.5 rounded-xl text-xs font-bold ${pwMsg.ok ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                  }`}>{pwMsg.t}</div>
-              )}
-              <div className="relative">
-                <Field label="Current Password" type={showPw ? 'text' : 'password'} value={pw.current}
-                  onChange={e => setPw(p => ({ ...p, current: e.target.value }))} />
-                <button type="button" onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 bottom-2.5 text-zinc-600 hover:text-zinc-400">
-                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+        {/* 3. Change Password - Hidden for Google Users */}
+        {user?.authProvider !== 'GOOGLE' && (
+          <div>
+            <AccordionBtn icon={KeyRound} label="Change Password" description="Update your login credentials"
+              isOpen={openSection === 'password'} onClick={() => toggle('password')} />
+            {openSection === 'password' && (
+              <div className="mt-2 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl space-y-3 animate-in slide-in-from-top-2 duration-200">
+                {pwMsg && (
+                  <div className={`px-4 py-2.5 rounded-xl text-xs font-bold ${pwMsg.ok ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    }`}>{pwMsg.t}</div>
+                )}
+                <div className="relative">
+                  <Field label="Current Password" type={showPw ? 'text' : 'password'} value={pw.current}
+                    onChange={e => setPw(p => ({ ...p, current: e.target.value }))} />
+                  <button type="button" onClick={() => setShowPw(!showPw)}
+                    className="absolute right-3 bottom-2.5 text-zinc-600 hover:text-zinc-400">
+                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="New Password" type={showPw ? 'text' : 'password'} value={pw.next}
+                    onChange={e => setPw(p => ({ ...p, next: e.target.value }))} />
+                  <Field label="Confirm" type={showPw ? 'text' : 'password'} value={pw.confirm}
+                    onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))} />
+                </div>
+                <button onClick={handlePwChange} disabled={!pw.current || !pw.next}
+                  className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-25 disabled:cursor-not-allowed">
+                  Update Password
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="New Password" type={showPw ? 'text' : 'password'} value={pw.next}
-                  onChange={e => setPw(p => ({ ...p, next: e.target.value }))} />
-                <Field label="Confirm" type={showPw ? 'text' : 'password'} value={pw.confirm}
-                  onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))} />
-              </div>
-              <button onClick={handlePwChange} disabled={!pw.current || !pw.next}
-                className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-25 disabled:cursor-not-allowed">
-                Update Password
-              </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Account Card ── */}

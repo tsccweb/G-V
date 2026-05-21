@@ -142,13 +142,28 @@ const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client('687528189146-64gpt46kkdipv6rcdeclrn9cuepnqaoj.apps.googleusercontent.com');
 
 exports.googleLogin = async (req, res) => {
-  const { credential } = req.body;
+  const { credential, accessToken } = req.body;
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: '687528189146-64gpt46kkdipv6rcdeclrn9cuepnqaoj.apps.googleusercontent.com',
-    });
-    const payload = ticket.getPayload();
+    let payload;
+
+    if (accessToken) {
+      // Verify via Access Token (used for custom buttons)
+      const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+      payload = googleRes.data;
+      // Map fields to match ticket.getPayload() structure
+      payload.given_name = payload.given_name || payload.name?.split(' ')[0];
+      payload.family_name = payload.family_name || payload.name?.split(' ').slice(1).join(' ');
+    } else if (credential) {
+      // Verify via ID Token (credential from standard button)
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: '687528189146-64gpt46kkdipv6rcdeclrn9cuepnqaoj.apps.googleusercontent.com',
+      });
+      payload = ticket.getPayload();
+    } else {
+      return res.status(400).json({ error: 'No Google credentials provided' });
+    }
+
     const { email, given_name, family_name, picture } = payload;
 
     let user = await prisma.user.findUnique({
@@ -167,6 +182,7 @@ exports.googleLogin = async (req, res) => {
           role: 'MEMBER',
           plan: 'FREE',
           avatarUrl: picture,
+          authProvider: 'GOOGLE',
           settings: { create: {} }
         },
         include: { settings: true }

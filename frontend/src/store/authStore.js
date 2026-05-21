@@ -62,10 +62,10 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  googleLogin: async (credential) => {
+  googleLogin: async ({ credential, accessToken }) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${API_URL}/auth/google-login`, { credential });
+      const response = await axios.post(`${API_URL}/auth/google-login`, { credential, accessToken });
       const { user, token } = response.data;
       localStorage.setItem('token', token);
       set({ user, token, isLoading: false });
