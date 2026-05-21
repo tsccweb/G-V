@@ -8,28 +8,29 @@ export default function InstallPrompt() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    console.log('InstallPrompt: Effect running');
-    
     // Check if app is already installed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    console.log('InstallPrompt: isStandalone =', isStandalone);
     
     if (isStandalone) {
       setIsInstalled(true);
       return;
     }
 
+    // Check if user has already dismissed the prompt recently (7 days)
+    const lastDismissed = localStorage.getItem('installPromptDismissed');
+    if (lastDismissed && Date.now() - parseInt(lastDismissed) < 7 * 24 * 60 * 60 * 1000) {
+      return;
+    }
+
     // Detect iOS
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(ios);
-    console.log('InstallPrompt: isIOS =', ios);
 
     if (ios) {
       setShowPrompt(true);
     } else {
       // Listen for beforeinstallprompt event (Android/Chrome)
       const handleBeforeInstallPrompt = (e) => {
-        console.log('InstallPrompt: beforeinstallprompt event fired!');
         e.preventDefault();
         setDeferredPrompt(e);
         setShowPrompt(true);
