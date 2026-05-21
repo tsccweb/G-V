@@ -1,9 +1,8 @@
 services:
   - type: web
-    name: psalms-backend
+    name: psalms-pwa
     env: node
     plan: starter
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: npm run start
+    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
+    startCommand: node backend/src/index.js
     autoDeploy: true
