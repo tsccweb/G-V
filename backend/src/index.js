@@ -17,6 +17,8 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -28,6 +30,29 @@ app.use('/api/live', liveSessionRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/flows', worshipFlowRoutes);
 app.use('/api/admin', adminRoutes);
+
+app.get('/api/health', async (req, res) => {
+  try {
+    // Check database connectivity
+    await prisma.$queryRaw`SELECT 1`;
+    
+    res.json({
+      status: 'healthy',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: 'v3'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      database: 'disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
 app.get('/api', (req, res) => {
   res.json({ message: 'Psalms API v3' });
