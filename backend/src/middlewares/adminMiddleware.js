@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prismaClient = new PrismaClient();
+const prismaClient = require('../utils/prisma');
 
 const adminMiddleware = async (req, res, next) => {
   if (!req.user) {

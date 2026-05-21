@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const songRoutes = require('./routes/songRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
@@ -12,16 +13,15 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const worshipFlowRoutes = require('./routes/worshipFlowRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const prisma = require('./utils/prisma');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/songs', songRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
@@ -56,12 +56,17 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-app.get('/api', (req, res) => {
-  res.json({ message: 'Psalms API v3' });
-});
+// Serve static files from the React app
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Psalms API v3' });
+// Catch-all route to serve index.html for SPA
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  } else {
+    res.status(404).json({ error: 'API route not found' });
+  }
 });
 
 app.listen(PORT, () => {

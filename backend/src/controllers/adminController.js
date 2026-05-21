@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
@@ -18,7 +17,8 @@ exports.getAllUsers = async (req, res) => {
     });
     res.json(users);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch users' });
+    console.error('[AdminController] getAllUsers Error:', error);
+    res.status(500).json({ error: 'Failed to fetch users', details: error.message });
   }
 };
 
@@ -35,7 +35,8 @@ exports.updateUser = async (req, res) => {
     });
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update user' });
+    console.error('[AdminController] updateUser Error:', error);
+    res.status(500).json({ error: 'Failed to update user', details: error.message });
   }
 };
 
@@ -46,7 +47,8 @@ exports.deleteUser = async (req, res) => {
     await prisma.user.delete({ where: { id } });
     res.json({ message: 'User deleted' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete user' });
+    console.error('[AdminController] deleteUser Error:', error);
+    res.status(500).json({ error: 'Failed to delete user', details: error.message });
   }
 };
 
@@ -63,7 +65,8 @@ exports.getSubscriptionRequests = async (req, res) => {
     });
     res.json(requests);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch requests' });
+    console.error('[AdminController] getSubscriptionRequests Error:', error);
+    res.status(500).json({ error: 'Failed to fetch requests', details: error.message });
   }
 };
 
@@ -95,6 +98,7 @@ exports.handleSubscriptionRequest = async (req, res) => {
 
     res.json({ message: `Request ${status.toLowerCase()}`, request });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to handle request' });
+    console.error('[AdminController] handleSubscriptionRequest Error:', error);
+    res.status(500).json({ error: 'Failed to handle request', details: error.message });
   }
 };
