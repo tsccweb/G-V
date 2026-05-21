@@ -17,7 +17,7 @@ const plans = [
   {
     name: 'STANDARD',
     price: '₱200',
-    period: '/month',
+    period: 'one-time',
     icon: Star,
     color: 'bg-emerald-500/10 text-emerald-400',
     popular: true,
@@ -74,7 +74,7 @@ export default function Pricing() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-black text-white tracking-tight italic">Level Up Your Ministry</h1>
         <p className="text-zinc-500 mt-3 max-w-md mx-auto text-sm">
-          Simple pricing. All features unlocked for just ₱200/month.
+          Simple pricing. All features unlocked with a one-time payment of ₱200.
         </p>
       </div>
 
@@ -149,7 +149,7 @@ export default function Pricing() {
       </div>
 
       <p className="mt-12 text-center text-[11px] text-zinc-500 font-medium max-w-sm mx-auto leading-relaxed">
-        Payments are verified manually by ministry admins. After requesting Standard, please contact your ministry head for payment details.
+        One-time payment verified manually by ministry admins. After requesting Standard, please contact your ministry head for payment details.
       </p>
     </div>
   );
