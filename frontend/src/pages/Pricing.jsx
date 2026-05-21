@@ -75,7 +75,7 @@ export default function Pricing() {
 
   const handleDmJason = () => {
     setShowStep2(false);
-    window.open('https://www.facebook.com/messages/t/100000847895989', '_blank');
+    window.open('https://www.facebook.com/jasonanthonytrillo', '_blank');
     navigate('/settings');
   };
 
@@ -123,8 +123,8 @@ export default function Pricing() {
           return (
             <div key={plan.name}
               className={`relative flex flex-col p-8 rounded-[2.5rem] border transition-all duration-500 ${plan.popular
-                  ? 'bg-zinc-900 border-emerald-500/50 shadow-2xl shadow-emerald-500/5 z-10'
-                  : 'bg-zinc-950/50 border-zinc-800'
+                ? 'bg-zinc-900 border-emerald-500/50 shadow-2xl shadow-emerald-500/5 z-10'
+                : 'bg-zinc-950/50 border-zinc-800'
                 }`}>
 
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${plan.color} mb-6 shadow-xl`}>
@@ -152,12 +152,12 @@ export default function Pricing() {
                 onClick={() => handleSelectPlan(plan.name)}
                 disabled={isCurrent || isRequested || isLoading}
                 className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${isCurrent
-                    ? 'bg-zinc-800 text-zinc-500 cursor-default'
-                    : isRequested
-                      ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 cursor-default'
-                      : plan.popular
-                        ? 'bg-white text-black hover:bg-zinc-200'
-                        : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                  ? 'bg-zinc-800 text-zinc-500 cursor-default'
+                  : isRequested
+                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 cursor-default'
+                    : plan.popular
+                      ? 'bg-white text-black hover:bg-zinc-200'
+                      : 'bg-zinc-800 text-white hover:bg-zinc-700'
                   }`}>
                 {isLoading ? <Loader2 className="animate-spin" size={18} /> :
                   isCurrent ? 'Current Plan' :
