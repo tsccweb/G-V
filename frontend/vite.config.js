@@ -8,8 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.png', 'mask-icon.svg'],
+      includeAssets: ['logo.png', 'mask-icon.svg', 'screenshot-mobile.png', 'screenshot-desktop.png'],
       manifest: {
+        id: 'com.psalms.worship',
         name: 'G>/\\V Worship PWA',
         short_name: 'G>/\\V',
         description: 'Modern worship ministry management and chord rendering.',
@@ -39,6 +40,22 @@ export default defineConfig({
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any maskable'
+          }
+        ],
+        screenshots: [
+          {
+            src: '/screenshot-mobile.png',
+            sizes: '500x844',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Worship Management on Mobile'
+          },
+          {
+            src: '/screenshot-desktop.png',
+            sizes: '1280x800',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'Comprehensive Service Planning'
           }
         ]
       }
