@@ -340,12 +340,16 @@ exports.getMyTeam = async (req, res) => {
       });
     });
 
-    const formatted = Array.from(teammates.values()).map(u => ({
-      id: u.id,
-      name: `${u.firstName} ${u.lastName}`,
-      role: u.role,
-      status: 'Active'
-    }));
+    const formatted = Array.from(teammates.values()).map(u => {
+      const fullName = `${u.firstName} ${u.lastName}`.trim();
+      return {
+        id: u.id,
+        name: fullName || (u.email ? u.email.split('@')[0] : 'Unknown'),
+        email: u.email,
+        role: u.role || 'MEMBER',
+        status: 'Active'
+      };
+    });
 
     res.json(formatted);
   } catch (error) {
