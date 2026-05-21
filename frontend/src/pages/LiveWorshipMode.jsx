@@ -38,6 +38,7 @@ function LiveWorshipMode() {
   const [showScrollPanel, setShowScrollPanel] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const scrollRef = useRef(null);
+  const isJumping = useRef(false);
 
   // Mutations
   const goLiveMutation = useMutation({
@@ -186,7 +187,7 @@ function LiveWorshipMode() {
       // speed 1 = 100ms, speed 10 = 10ms
       const interval = Math.max(10, 110 - (scrollSpeed * 10));
       scrollTimer = setInterval(() => {
-        if (scrollRef.current) {
+        if (scrollRef.current && !isJumping.current) {
           scrollRef.current.scrollBy(0, 1);
         }
       }, interval);
@@ -236,6 +237,8 @@ function LiveWorshipMode() {
 
   const jumpToSection = (index) => {
     setCurrentSlideIndex(index);
+    isJumping.current = true;
+    
     // Smooth scroll to the highlighted section
     const el = document.getElementById(`slide-${index}`);
     if (el && scrollRef.current) {
@@ -244,6 +247,11 @@ function LiveWorshipMode() {
         behavior: 'smooth'
       });
     }
+
+    // Reset jump flag after smooth scroll is likely done
+    setTimeout(() => {
+      isJumping.current = false;
+    }, 800);
   };
 
   const copyJoinLink = () => {

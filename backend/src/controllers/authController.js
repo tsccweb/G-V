@@ -39,8 +39,8 @@ exports.register = async (req, res) => {
     const { password: _, ...safeUser } = user;
     res.status(201).json({ user: safeUser, token });
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(400).json({ error: 'Registration failed' });
+    console.error('[AuthController] Register Error:', error);
+    res.status(400).json({ error: 'Registration failed', details: error.message });
   }
 };
 
@@ -70,8 +70,8 @@ exports.login = async (req, res) => {
     const { password: _, ...safeUser } = user;
     res.json({ user: safeUser, token });
   } catch (error) {
-    console.error('Login Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[AuthController] Login Error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
 
