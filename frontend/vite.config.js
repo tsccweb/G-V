@@ -58,6 +58,10 @@ export default defineConfig({
             label: 'Comprehensive Service Planning'
           }
         ]
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],
