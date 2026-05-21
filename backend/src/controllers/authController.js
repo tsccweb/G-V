@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
     });
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role, plan: user.plan },
+      { userId: user.id, role: user.role, plan: user.plan, jwtVersion: user.jwtVersion },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -48,15 +48,23 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await prisma.user.findUnique({ 
+    let user = await prisma.user.findUnique({ 
       where: { email },
       include: { settings: true }
     });
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    // Invalidate previous sessions by incrementing jwtVersion
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { jwtVersion: { increment: 1 } },
+      include: { settings: true }
+    });
+
     const token = jwt.sign(
-      { userId: user.id, role: user.role, plan: user.plan },
+      { userId: user.id, role: user.role, plan: user.plan, jwtVersion: user.jwtVersion },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
