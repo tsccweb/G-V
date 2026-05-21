@@ -18,6 +18,7 @@ import SettingsPage from './pages/SettingsPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Layout from './components/Layout';
 import InstallPrompt from './components/InstallPrompt';
+import { useAppBadge } from './hooks/useAppBadge';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
@@ -25,6 +26,9 @@ const queryClient = new QueryClient();
 
 function App() {
   const { checkAuth, user, isLoading } = useAuthStore();
+  
+  // Initialize App Icon Badging
+  useAppBadge(!!user);
 
   useEffect(() => {
     checkAuth();

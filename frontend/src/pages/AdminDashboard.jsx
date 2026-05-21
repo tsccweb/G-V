@@ -175,7 +175,8 @@ export default function AdminDashboard() {
               <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest">Recent Activity</h2>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
-              <table className="w-full text-left text-sm text-zinc-400">
+              {/* Desktop Table */}
+              <table className="hidden md:table w-full text-left text-sm text-zinc-400">
                 <thead className="bg-zinc-900 text-[10px] font-black uppercase tracking-wider text-zinc-500">
                   <tr>
                     <th className="px-6 py-4">User</th>
@@ -208,6 +209,27 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden divide-y divide-zinc-800">
+                {processedRequests?.map(r => (
+                  <div key={r.id} className="p-4 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-bold text-sm truncate">{r.user.firstName} {r.user.lastName}</p>
+                      <p className="text-[10px] text-zinc-600 truncate">{r.user.email}</p>
+                      <p className="text-xs text-zinc-400 mt-1">To <span className="text-white font-semibold">{r.plan}</span></p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${
+                        r.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
+                      }`}>
+                        {r.status}
+                      </span>
+                      <span className="text-[10px] text-zinc-600">{formatDate(r.updatedAt)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         </div>

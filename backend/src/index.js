@@ -11,6 +11,7 @@ const liveSessionRoutes = require('./routes/liveSessionRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const worshipFlowRoutes = require('./routes/worshipFlowRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,6 +31,7 @@ app.use('/api/live', liveSessionRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/flows', worshipFlowRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', async (req, res) => {
   try {
