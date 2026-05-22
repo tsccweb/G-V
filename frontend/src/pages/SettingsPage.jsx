@@ -269,7 +269,7 @@ export default function SettingsPage() {
                       onChange={e => setProfile(p => ({ ...p, role: e.target.value }))}
                       className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:border-zinc-500 focus:outline-none transition-colors appearance-none"
                     >
-                      {ROLES.map(r => (
+                      {ROLES.filter(r => r !== 'ADMIN').map(r => (
                         <option key={r} value={r}>{r.replace('_', ' ')}</option>
                       ))}
                     </select>
