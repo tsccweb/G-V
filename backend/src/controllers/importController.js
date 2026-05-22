@@ -208,13 +208,20 @@ exports.importPdf = async (req, res) => {
     console.log('[PDF-Import] Parsing PDF buffer...');
     let data;
     try {
-      data = await pdf(req.file.buffer);
+      if (pdf.prototype && typeof pdf.prototype.getText === 'function') {
+        const parserInstance = new pdf(req.file.buffer);
+        data = await parserInstance.getText();
+      } else {
+        data = await pdf(req.file.buffer);
+      }
       console.log('[PDF-Import] PDF parsed successfully, text length:', data.text?.length);
     } catch (parseErr) {
       console.error('[PDF-Import] Parsing error:', {
         message: parseErr.message,
         stack: parseErr.stack,
-        bufferSize: req.file.buffer.length
+        bufferSize: req.file.buffer.length,
+        parserType: typeof pdf,
+        hasGetText: pdf?.prototype?.getText ? true : false
       });
       throw parseErr;
     }
