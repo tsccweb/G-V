@@ -18,23 +18,48 @@ const BROWSER_HEADERS = {
   'Cache-Control': 'no-cache',
 };
 
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
+];
+
 exports.searchOnline = async (req, res) => {
   const { q } = req.query;
   if (!q) return res.status(400).json({ error: 'Search query required' });
 
+  const randomUA = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+
   try {
-    // Search Ultimate Guitar via DuckDuckGo
+    // Attempt 1: DuckDuckGo Standard HTML
     const searchUrl = `https://duckduckgo.com/html/?q=site:ultimate-guitar.com+${encodeURIComponent(q)}+chords`;
-    const { data } = await axios.get(searchUrl, { headers: BROWSER_HEADERS });
-    const $ = cheerio.load(data);
     
+    const { data } = await axios.get(searchUrl, { 
+      headers: {
+        'User-Agent': randomUA,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': 'https://duckduckgo.com/',
+        'DNT': '1',
+      },
+      timeout: 5000
+    });
+
+    // If blocked, data will contain the anomaly check
+    if (data.includes('anomaly-modal') || data.includes('bots use DuckDuckGo too')) {
+      console.warn('Search BLOCKED by DDG. Sending empty results.');
+      return res.json([]);
+    }
+
+    const $ = cheerio.load(data);
     const results = [];
     $('.result__body').each((i, el) => {
       const title = $(el).find('.result__title a').text().trim();
       const url = $(el).find('.result__title a').attr('href');
       const snippet = $(el).find('.result__snippet').text().trim();
       
-      if (url && url.includes('ultimate-guitar.com')) {
+      if (url && url.toLowerCase().includes('ultimate-guitar.com')) {
         results.push({
           title: title.replace(' | Ultimate-Guitar.Com', '').replace(' Chords', ''),
           url: url,
@@ -46,16 +71,8 @@ exports.searchOnline = async (req, res) => {
 
     res.json(results);
   } catch (error) {
-    console.error('Search ERROR [Full]:', error);
-    if (error.response) {
-      console.error('Search Response Data:', error.response.data);
-      console.error('Search Response Status:', error.response.status);
-    }
-    res.status(500).json({ 
-      error: 'Failed to search online.', 
-      details: error.message,
-      status: error.response?.status
-    });
+    console.error('Search ERROR:', error.message);
+    res.json([]); // Graceful fallback
   }
 };
 

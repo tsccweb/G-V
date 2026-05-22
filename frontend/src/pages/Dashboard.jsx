@@ -167,7 +167,98 @@ function Dashboard() {
 
       {/* Action Hub */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Card 1: PDF Import */}
+        {/* Card 1: Online Search */}
+        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group h-full flex flex-col">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Search size={120} className="text-blue-500" />
+          </div>
+          <div className="relative z-10 space-y-6 flex-1">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
+                <Search size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase italic tracking-tighter">Quick Search</h3>
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Find songs on Ultimate Guitar</p>
+              </div>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search song, artist..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSearchError(null);
+                }}
+                className="w-full bg-black/50 border border-zinc-800 rounded-2xl px-6 py-4 text-sm font-medium focus:border-blue-500/50 outline-none transition-all placeholder:text-zinc-700"
+              />
+              {isSearching && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <Loader2 size={16} className="animate-spin text-zinc-600" />
+                </div>
+              )}
+            </div>
+
+            {searchError && (
+              <div className="flex items-center gap-2 text-red-500 text-[10px] font-bold bg-red-500/5 p-4 rounded-2xl border border-red-500/10 animate-in fade-in slide-in-from-top-1">
+                <AlertCircle size={14} className="shrink-0" />
+                {searchError}
+              </div>
+            )}
+
+            {searchResults.length > 0 && (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                {searchResults.slice(0, 6).map((result, idx) => (
+                  <button
+                    key={idx}
+                    onClick={async () => {
+                      const url = result.url;
+                      setIsImporting(true);
+                      setImportError(null);
+                      setImportSuccess(false);
+                      try {
+                        const parsedData = await importSongFromUrl(url);
+                        const newSong = await createSong({
+                          title: parsedData.title,
+                          artist: parsedData.artist,
+                          lyrics: parsedData.lyrics,
+                          chords: parsedData.chords || '',
+                          key: parsedData.key || 'C',
+                          category: 'Imported'
+                        });
+                        setImportSuccess(true);
+                        queryClient.invalidateQueries(['songs']);
+                        setTimeout(() => navigate(`/songs?id=${newSong.id}`), 1500);
+                      } catch (err) {
+                        setImportError('Failed to import. Try the PDF method or add manually.');
+                      } finally {
+                        setIsImporting(false);
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-4 bg-black border border-zinc-900 rounded-2xl hover:border-blue-500/40 hover:bg-zinc-900/50 transition-all text-left group/res"
+                  >
+                    <div className="flex-1 min-w-0 pr-4">
+                      <h4 className="text-sm font-bold text-zinc-200 truncate">{result.title}</h4>
+                      <p className="text-[10px] text-zinc-600 font-bold uppercase truncate">{result.source}</p>
+                    </div>
+                    <ArrowRight size={14} className="text-zinc-800 group-hover/res:text-blue-500 transition-colors" />
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {importSuccess && (
+              <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
+                <CheckCircle2 size={14} className="shrink-0" />
+                Success! Redirecting...
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card 2: PDF Import */}
         <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group h-full flex flex-col">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
             <FileText size={120} className="text-amber-500" />
@@ -213,46 +304,9 @@ function Dashboard() {
                   <p>{importError}</p>
                 </div>
               )}
-              
-              {importSuccess && (
-                <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
-                  <CheckCircle2 size={14} className="shrink-0" />
-                  Song imported! Redirecting...
-                </div>
-              )}
             </div>
           </div>
         </div>
-
-        {/* Card 2: Manual Add */}
-        <Link
-          to="/songs/new"
-          className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group h-full flex flex-col hover:border-zinc-500 transition-all shadow-2xl active:scale-[0.95]"
-        >
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Plus size={120} className="text-white" />
-          </div>
-          <div className="relative z-10 space-y-6 flex-1">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-2xl text-white">
-                <Plus size={24} />
-              </div>
-              <div>
-                <h3 className="text-xl font-black uppercase italic tracking-tighter">Manual Add</h3>
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Create a song from scratch</p>
-              </div>
-            </div>
-            
-            <div className="flex-1 flex flex-col justify-end">
-              <p className="text-sm text-zinc-500 font-medium leading-relaxed">
-                Need to add a song quickly? Paste your lyrics and chords directly into our premium editor.
-              </p>
-              <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white group-hover:translate-x-2 transition-transform">
-                Get Started <ArrowRight size={14} />
-              </div>
-            </div>
-          </div>
-        </Link>
       </div>
 
       {/* Management Grid */}
