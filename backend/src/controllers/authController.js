@@ -135,28 +135,43 @@ exports.forgotPassword = async (req, res) => {
     });
 
     // Send via Brevo
-    await axios.post('https://api.brevo.com/v3/smtp/email', {
-      sender: { name: 'Psalms Worship', email: 'no-reply@psalms-worship.com' },
-      to: [{ email }],
-      subject: 'Your Password Reset Code',
-      htmlContent: `
-        <div style="font-family: sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h2 style="color: #000; text-align: center;">Reset Password</h2>
-          <p style="color: #666; font-size: 14px; text-align: center;">Use the code below to reset your password. This code expires in 15 minutes.</p>
-          <div style="background: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; border-radius: 8px; margin: 20px 0;">
-            ${otpCode}
+    const brevoKey = process.env.BREVO_API_KEY ? process.env.BREVO_API_KEY.trim() : null;
+    
+    if (!brevoKey) {
+      console.error('[AuthController] Missing BREVO_API_KEY');
+      return res.status(500).json({ error: 'Email service configuration missing' });
+    }
+
+    try {
+      await axios.post('https://api.brevo.com/v3/smtp/email', {
+        sender: { name: 'Psalms Worship', email: 'no-reply@psalms-worship.com' },
+        to: [{ email }],
+        subject: 'Your Password Reset Code',
+        htmlContent: `
+          <div style="font-family: sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #000; text-align: center;">Reset Password</h2>
+            <p style="color: #666; font-size: 14px; text-align: center;">Use the code below to reset your password. This code expires in 15 minutes.</p>
+            <div style="background: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; border-radius: 8px; margin: 20px 0;">
+              ${otpCode}
+            </div>
+            <p style="color: #999; font-size: 11px; text-align: center;">If you didn't request this, please ignore this email.</p>
           </div>
-          <p style="color: #999; font-size: 11px; text-align: center;">If you didn't request this, please ignore this email.</p>
-        </div>
-      `
-    }, {
-      headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' }
-    });
+        `
+      }, {
+        headers: { 'api-key': brevoKey, 'Content-Type': 'application/json' }
+      });
+    } catch (brevoError) {
+      console.error('[AuthController] Brevo API Error:', brevoError.response ? brevoError.response.data : brevoError.message);
+      return res.status(500).json({ 
+        error: 'Failed to send OTP email', 
+        details: brevoError.response ? brevoError.response.data : brevoError.message 
+      });
+    }
 
     res.json({ message: 'OTP sent to your email' });
   } catch (error) {
-    console.error('Forgot Password Error:', error);
-    res.status(500).json({ error: 'Failed to send OTP' });
+    console.error('[AuthController] Forgot Password General Error:', error);
+    res.status(500).json({ error: 'Internal server error during password recovery' });
   }
 };
 
