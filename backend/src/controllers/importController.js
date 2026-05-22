@@ -2,11 +2,19 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 const BROWSER_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
   'Accept-Language': 'en-US,en;q=0.9',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Referer': 'https://www.google.com/',
+  'DNT': '1',
+  'Connection': 'keep-alive',
+  'Upgrade-Insecure-Requests': '1',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'cross-site',
+  'Sec-Fetch-User': '?1',
   'Cache-Control': 'no-cache',
-  'Pragma': 'no-cache',
 };
 
 exports.searchOnline = async (req, res) => {
@@ -63,12 +71,16 @@ exports.importSong = async (req, res) => {
     if (url.includes('ultimate-guitar.com')) {
       const storeData = $("div[class='js-store']").attr("data-content");
       if (storeData) {
-        const json = JSON.parse(storeData);
-        const tabData = json.store.page.data.tab;
-        songData.title = tabData.song_name;
-        songData.artist = tabData.artist_name;
-        songData.lyrics = json.store.page.data.tab_view.wiki_tab.content || '';
-        songData.key = tabData.tonality_name || '';
+        try {
+          const json = JSON.parse(storeData);
+          const tabData = json.store.page.data.tab;
+          songData.title = tabData.song_name;
+          songData.artist = tabData.artist_name;
+          songData.lyrics = json.store.page.data.tab_view.wiki_tab.content || '';
+          songData.key = tabData.tonality_name || '';
+        } catch (parseError) {
+          console.error('[Import] Failed to parse UG store data:', parseError.message);
+        }
       }
     } else if (url.includes('songsterr.com')) {
       // Find window.STATE or similar
@@ -82,9 +94,9 @@ exports.importSong = async (req, res) => {
               const state = JSON.parse(jsonMatch[1]);
               songData.title = state.song.title;
               songData.artist = state.song.artist;
-              // Chords are harder on Songsterr as they use a custom JSON format
-              // We'll fallback to generic text extraction or a specific parser
-            } catch (e) {}
+            } catch (e) {
+              console.error('[Import] Failed to parse Songsterr state:', e.message);
+            }
           }
         }
       });
@@ -103,6 +115,11 @@ exports.importSong = async (req, res) => {
     res.json(songData);
   } catch (error) {
     console.error('Import Error:', error.message);
-    res.status(500).json({ error: 'Failed to import song from URL. The site might be blocking us.' });
+    const status = error.response?.status || 500;
+    const message = status === 403 ? 'This site is blocking automated imports. Please try copying the lyrics manually.' : 
+                    status === 429 ? 'Too many requests. Please wait a moment and try again.' :
+                    'Failed to import song from URL. Please ensure it\'s a valid Ultimate Guitar or Songsterr link.';
+    
+    res.status(status).json({ error: message, details: error.message });
   }
 };

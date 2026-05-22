@@ -42,13 +42,58 @@ exports.getUnreadCount = async (req, res) => {
 exports.getNotifications = async (req, res) => {
   try {
     const userId = req.user.userId;
+    const userRole = req.user.role;
+
+    // 1. General Notifications
     const notifications = await prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 50
     });
-    res.json(notifications);
+
+    // 2. Pending Invitations
+    const invitations = await prisma.invitation.findMany({
+      where: { receiverId: userId, status: 'PENDING' },
+      include: { service: { select: { title: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // 3. Admin: Subscription Requests
+    let adminRequests = [];
+    if (userRole === 'ADMIN') {
+      adminRequests = await prisma.subscriptionRequest.findMany({
+        where: { status: 'PENDING' },
+        include: { user: { select: { firstName: true, lastName: true } } },
+        orderBy: { createdAt: 'desc' }
+      });
+    }
+
+    // Map all to a consistent format
+    const mappedInvitations = invitations.map(inv => ({
+      id: inv.id,
+      message: `Team Invitation: You've been invited to join the lineup for "${inv.service.title}".`,
+      createdAt: inv.createdAt,
+      isRead: false,
+      type: 'INVITATION'
+    }));
+
+    const mappedAdminRequests = adminRequests.map(req => ({
+      id: req.id,
+      message: `Admin: New subscription upgrade request from ${req.user.firstName} ${req.user.lastName}.`,
+      createdAt: req.createdAt,
+      isRead: false,
+      type: 'ADMIN_REQUEST'
+    }));
+
+    const all = [
+      ...notifications,
+      ...mappedInvitations,
+      ...mappedAdminRequests
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json(all.slice(0, 50));
   } catch (error) {
+    console.error('Error fetching unified notifications:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 };

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, Check, Trash2, Loader2, Info } from 'lucide-react';
+import { Bell, Check, Trash2, Loader2, Info, UserPlus, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '../services/notificationService';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 export default function NotificationTray() {
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: notifications, isLoading: isNoteLoading } = useQuery({
     queryKey: ['notifications'],
@@ -86,12 +88,28 @@ export default function NotificationTray() {
                   <div className="divide-y divide-zinc-800/50">
                     {notifications.map((note) => (
                       <div 
-                        key={note.id}
-                        onClick={() => !note.isRead && markReadMutation.mutate(note.id)}
+                        key={`${note.type}-${note.id}`}
+                        onClick={() => {
+                          if (note.type === 'INVITATION') {
+                            navigate('/team');
+                            setIsOpen(false);
+                          } else if (note.type === 'ADMIN_REQUEST') {
+                            navigate('/admin');
+                            setIsOpen(false);
+                          } else if (!note.isRead) {
+                            markReadMutation.mutate(note.id);
+                          }
+                        }}
                         className={`p-4 flex gap-4 hover:bg-zinc-800/30 transition-colors cursor-pointer group ${!note.isRead ? 'bg-amber-500/5' : ''}`}
                       >
-                        <div className={`mt-1 p-2 rounded-xl h-fit ${!note.isRead ? 'bg-amber-500/10 text-amber-500' : 'bg-zinc-800 text-zinc-600'}`}>
-                          <Info size={16} />
+                        <div className={`mt-1 p-2 rounded-xl h-fit ${
+                          note.type === 'INVITATION' ? 'bg-blue-500/10 text-blue-500' :
+                          note.type === 'ADMIN_REQUEST' ? 'bg-purple-500/10 text-purple-500' :
+                          !note.isRead ? 'bg-amber-500/10 text-amber-500' : 'bg-zinc-800 text-zinc-600'
+                        }`}>
+                          {note.type === 'INVITATION' ? <UserPlus size={16} /> : 
+                           note.type === 'ADMIN_REQUEST' ? <ShieldAlert size={16} /> : 
+                           <Info size={16} />}
                         </div>
                         <div className="flex-1 space-y-1">
                           <p className={`text-sm leading-relaxed ${!note.isRead ? 'text-zinc-200 font-medium' : 'text-zinc-500'}`}>
@@ -102,7 +120,10 @@ export default function NotificationTray() {
                           </p>
                         </div>
                         {!note.isRead && (
-                          <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 shrink-0 group-hover:scale-125 transition-transform" />
+                          <div className={`w-2 h-2 rounded-full mt-2 shrink-0 group-hover:scale-125 transition-transform ${
+                            note.type === 'INVITATION' ? 'bg-blue-500' :
+                            note.type === 'ADMIN_REQUEST' ? 'bg-purple-500' : 'bg-amber-500'
+                          }`} />
                         )}
                       </div>
                     ))}
