@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Music, LayoutDashboard, Calendar, Users, Settings, LogOut, Menu, X, Lock, LayoutList, AlertTriangle } from 'lucide-react';
+import { Music, Home, Calendar, Users, Settings, LogOut, Menu, X, Lock, LayoutList, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
@@ -18,7 +18,7 @@ function Layout({ children }) {
   };
 
   const navItems = [
-    { name: 'Home', path: '/', icon: LayoutDashboard },
+    { name: 'Home', path: '/', icon: Home },
     { name: 'Songs', path: '/songs', icon: Music },
     { name: 'Services', path: '/services', icon: Calendar, isPremium: true },
     { name: 'Team', path: '/team', icon: Users, isPremium: true },

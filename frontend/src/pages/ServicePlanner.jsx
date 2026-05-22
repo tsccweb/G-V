@@ -246,9 +246,11 @@ function ServicePlanner() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-zinc-500 truncate">
-                              {item.assignedTo ? `Assigned to: ${item.assignedTo}` : 'No one assigned'}
-                            </p>
+                            {item.assignedTo && (
+                              <p className="text-xs text-zinc-500 truncate">
+                                Assigned to: {item.assignedTo}
+                              </p>
+                            )}
                           </div>
 
                           <div className="text-right flex items-center gap-4">
