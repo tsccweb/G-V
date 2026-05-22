@@ -21,6 +21,7 @@ const useAuthStore = create((set) => ({
   token: localStorage.getItem('token') || null,
   theme: localStorage.getItem('theme') || 'dark',
   isLoading: !!localStorage.getItem('token'),
+  forgotLoading: false,
   error: null,
 
   toggleTheme: () => {
@@ -80,36 +81,39 @@ const useAuthStore = create((set) => ({
   },
 
   forgotPassword: async (email) => {
-    set({ isLoading: true, error: null });
+    set({ forgotLoading: true, error: null });
     try {
       await axios.post(`${API_URL}/auth/forgot-password`, { email });
-      set({ isLoading: false });
+      set({ forgotLoading: false });
       return true;
     } catch (error) {
+      set({ forgotLoading: false });
       useAuthStore.getState().setError(error.response?.data?.error || 'Failed to send OTP');
       return false;
     }
   },
 
   verifyOTP: async (email, code) => {
-    set({ isLoading: true, error: null });
+    set({ forgotLoading: true, error: null });
     try {
       const response = await axios.post(`${API_URL}/auth/verify-otp`, { email, code });
-      set({ isLoading: false });
+      set({ forgotLoading: false });
       return response.data.valid;
     } catch (error) {
+      set({ forgotLoading: false });
       useAuthStore.getState().setError(error.response?.data?.error || 'Invalid OTP');
       return false;
     }
   },
 
   resetPassword: async (email, code, newPassword) => {
-    set({ isLoading: true, error: null });
+    set({ forgotLoading: true, error: null });
     try {
       await axios.post(`${API_URL}/auth/reset-password`, { email, code, newPassword });
-      set({ isLoading: false });
+      set({ forgotLoading: false });
       return true;
     } catch (error) {
+      set({ forgotLoading: false });
       useAuthStore.getState().setError(error.response?.data?.error || 'Failed to reset password');
       return false;
     }

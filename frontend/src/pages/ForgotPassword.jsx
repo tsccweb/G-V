@@ -6,7 +6,7 @@ import useAuthStore from '../store/authStore';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const { forgotPassword, verifyOTP, resetPassword, isLoading, error } = useAuthStore();
+  const { forgotPassword, verifyOTP, resetPassword, forgotLoading, error } = useAuthStore();
 
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password, 4: Success
   const [email, setEmail] = useState('');
@@ -17,9 +17,18 @@ export default function ForgotPassword() {
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
+    console.log('Sending OTP for:', email);
     setLocalError(null);
-    const success = await forgotPassword(email);
-    if (success) setStep(2);
+    try {
+      const success = await forgotPassword(email);
+      console.log('OTP Send Success:', success);
+      if (success) {
+        setStep(2);
+      }
+    } catch (err) {
+      console.error('handleSendOTP Error:', err);
+      setLocalError('An unexpected error occurred. Please try again.');
+    }
   };
 
   const handleVerifyOTP = async (e) => {
@@ -99,11 +108,11 @@ export default function ForgotPassword() {
                     />
                   </div>
                   <button
-                    disabled={isLoading}
+                    disabled={forgotLoading}
                     className="w-full py-4 bg-white text-black font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-[0.98] disabled:opacity-50"
                   >
-                    {isLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : 'Send OTP Code'}
-                    {!isLoading && <ArrowRight size={18} />}
+                    {forgotLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : 'Send OTP Code'}
+                    {!forgotLoading && <ArrowRight size={18} />}
                   </button>
                 </form>
               </motion.div>
@@ -132,16 +141,16 @@ export default function ForgotPassword() {
                     />
                   </div>
                   <button
-                    disabled={isLoading}
+                    disabled={forgotLoading}
                     className="w-full py-4 bg-white text-black font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-[0.98] disabled:opacity-50"
                   >
-                    {isLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : 'Verify Code'}
+                    {forgotLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : 'Verify Code'}
                   </button>
                   
                   <div className="space-y-3">
                     <button
                       type="button"
-                      disabled={isLoading}
+                      disabled={forgotLoading}
                       onClick={() => forgotPassword(email)}
                       className="w-full text-xs font-bold text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
                     >
@@ -192,10 +201,10 @@ export default function ForgotPassword() {
                     />
                   </div>
                   <button
-                    disabled={isLoading}
+                    disabled={forgotLoading}
                     className="w-full py-4 bg-white text-black font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-[0.98] disabled:opacity-50 mt-4"
                   >
-                    {isLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : 'Reset Password'}
+                    {forgotLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : 'Reset Password'}
                   </button>
                 </form>
               </motion.div>
