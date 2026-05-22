@@ -144,7 +144,7 @@ exports.forgotPassword = async (req, res) => {
 
     try {
       await axios.post('https://api.brevo.com/v3/smtp/email', {
-        sender: { name: 'Psalms Worship', email: 'no-reply@psalms-worship.com' },
+        sender: { name: 'Psalms Worship', email: 'tsccresurrection@gmail.com' },
         to: [{ email }],
         subject: 'Your Password Reset Code',
         htmlContent: `
