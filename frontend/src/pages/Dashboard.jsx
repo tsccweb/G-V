@@ -24,6 +24,7 @@ function Dashboard() {
   
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
 
   useEffect(() => {
     if (!searchQuery || searchQuery.trim().length < 2) {
@@ -38,6 +39,7 @@ function Dashboard() {
         setSearchResults(results);
       } catch (error) {
         console.error('Search failed:', error);
+        setSearchError('Search failed. The source might be temporarily unavailable.');
       } finally {
         setIsSearching(false);
       }
@@ -186,7 +188,10 @@ function Dashboard() {
                 type="text"
                 placeholder="Search song, artist..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSearchError(null);
+                }}
                 className="w-full bg-black/50 border border-zinc-800 rounded-2xl px-6 py-4 text-sm font-medium focus:border-blue-500/50 outline-none transition-all placeholder:text-zinc-700"
               />
               {isSearching && (
@@ -195,6 +200,13 @@ function Dashboard() {
                 </div>
               )}
             </div>
+
+            {searchError && (
+              <div className="flex items-center gap-2 text-red-500 text-[10px] font-bold bg-red-500/5 p-4 rounded-2xl border border-red-500/10 animate-in fade-in slide-in-from-top-1">
+                <AlertCircle size={14} className="shrink-0" />
+                {searchError}
+              </div>
+            )}
 
             {searchResults.length > 0 && (
               <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">

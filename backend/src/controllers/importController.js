@@ -24,7 +24,7 @@ exports.searchOnline = async (req, res) => {
 
   try {
     // Search Ultimate Guitar via DuckDuckGo
-    const searchUrl = `https://html.duckduckgo.com/html/?q=site:ultimate-guitar.com+${encodeURIComponent(q)}+chords`;
+    const searchUrl = `https://duckduckgo.com/html/?q=site:ultimate-guitar.com+${encodeURIComponent(q)}+chords`;
     const { data } = await axios.get(searchUrl, { headers: BROWSER_HEADERS });
     const $ = cheerio.load(data);
     
@@ -34,9 +34,7 @@ exports.searchOnline = async (req, res) => {
       const url = $(el).find('.result__title a').attr('href');
       const snippet = $(el).find('.result__snippet').text().trim();
       
-      // DuckDuckGo results go through a redirector, we need to extract the real URL if possible
-      // or just use the link as is if it works.
-      if (url && url.includes('tabs.ultimate-guitar.com')) {
+      if (url && url.includes('ultimate-guitar.com')) {
         results.push({
           title: title.replace(' | Ultimate-Guitar.Com', '').replace(' Chords', ''),
           url: url,
@@ -48,8 +46,16 @@ exports.searchOnline = async (req, res) => {
 
     res.json(results);
   } catch (error) {
-    console.error('Search Error:', error.message);
-    res.status(500).json({ error: 'Failed to search online.' });
+    console.error('Search ERROR [Full]:', error);
+    if (error.response) {
+      console.error('Search Response Data:', error.response.data);
+      console.error('Search Response Status:', error.response.status);
+    }
+    res.status(500).json({ 
+      error: 'Failed to search online.', 
+      details: error.message,
+      status: error.response?.status
+    });
   }
 };
 
