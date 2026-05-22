@@ -1,13 +1,46 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getServices } from '../services/serviceService';
 import { getSongs } from '../services/songService';
-import { Play, Settings, Plus, LayoutList, Music, Radio, Users, Calendar, Lock, ArrowRight, Sun, Moon } from 'lucide-react';
+import { Play, Settings, Plus, LayoutList, Music, Radio, Users, Calendar, Lock, ArrowRight, Sun, Moon, Wand2, Sparkles, Loader2, CheckCircle2, AlertCircle, Search, ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import useAuthStore from '../store/authStore';
+import { importSongFromUrl, searchOnline } from '../services/importService';
+import { createSong } from '../services/songService';
 
 function Dashboard() {
   const { user, theme, toggleTheme } = useAuthStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [importUrl, setImportUrl] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState(null);
+  const [importSuccess, setImportSuccess] = useState(false);
+  
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!importUrl || importUrl.startsWith('http')) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchOnline(importUrl);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Search failed:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [importUrl]);
 
   const { data: services } = useQuery({
     queryKey: ['services'],
@@ -36,6 +69,42 @@ function Dashboard() {
       navigate(`/services/${nextService.id}`);
     } else {
       navigate('/services');
+    }
+  };
+
+  const handleMagicImport = async (e) => {
+    e.preventDefault();
+    if (!importUrl) return;
+    
+    setIsImporting(true);
+    setImportError(null);
+    setImportSuccess(false);
+    
+    try {
+      const parsedData = await importSongFromUrl(importUrl);
+      
+      // Now save it to the library
+      const newSong = await createSong({
+        title: parsedData.title,
+        artist: parsedData.artist,
+        lyrics: parsedData.lyrics,
+        chords: parsedData.chords || '',
+        key: parsedData.key || 'C',
+        category: 'Imported'
+      });
+      
+      setImportSuccess(true);
+      setImportUrl('');
+      queryClient.invalidateQueries(['songs']);
+      
+      setTimeout(() => {
+        navigate(`/songs?id=${newSong.id}`);
+      }, 1500);
+    } catch (error) {
+      console.error('Import failed:', error);
+      setImportError(error.response?.data?.error || 'Failed to import song. Please check the URL.');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -92,6 +161,114 @@ function Dashboard() {
             <p className="text-zinc-600 font-bold text-sm">Follow the leader with a code</p>
           </div>
         </Link>
+      </div>
+
+      {/* Magic Import Section */}
+      <div className="bg-zinc-900/50 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+          <Sparkles size={120} className="text-amber-500" />
+        </div>
+        
+        <div className="relative z-10 flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500">
+              <Wand2 size={24} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black tracking-tight uppercase">Magic Import</h2>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Automagically add songs from UG or Songsterr</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleMagicImport} className="flex flex-col md:flex-row gap-3">
+            <input
+              type="text"
+              placeholder="Paste Ultimate Guitar or Songsterr URL here..."
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+              className="flex-1 bg-black border border-zinc-800 rounded-2xl px-6 py-4 text-sm font-medium focus:border-amber-500/50 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all placeholder:text-zinc-700"
+              disabled={isImporting}
+            />
+            <button
+              type="submit"
+              disabled={isImporting || !importUrl}
+              className={`px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 min-w-[160px] ${
+                isImporting 
+                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
+                  : 'bg-amber-500 text-black hover:bg-amber-400 active:scale-95 shadow-lg shadow-amber-500/20'
+              }`}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Working...
+                </>
+              ) : importSuccess ? (
+                <>
+                  <CheckCircle2 size={18} />
+                  Success!
+                </>
+              ) : (
+                'Import Now'
+              )}
+            </button>
+          </form>
+
+          {importError && (
+            <div className="flex items-center gap-2 text-red-500 text-xs font-bold bg-red-500/5 p-3 rounded-xl border border-red-500/10 animate-in fade-in slide-in-from-top-1">
+              <AlertCircle size={14} />
+              {importError}
+            </div>
+          )}
+          
+          {importSuccess && (
+            <div className="flex items-center gap-2 text-emerald-500 text-xs font-bold bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10 animate-in fade-in slide-in-from-top-1">
+              <CheckCircle2 size={14} />
+              Song imported! Redirecting to library...
+            </div>
+          )}
+
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest px-2">Top Results from Ultimate Guitar</p>
+              <div className="grid grid-cols-1 gap-2">
+                {searchResults.slice(0, 5).map((result, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setImportUrl(result.url);
+                      setSearchResults([]);
+                      // Trigger import immediately?
+                    }}
+                    className="flex items-center justify-between p-4 bg-black border border-zinc-900 rounded-2xl hover:border-amber-500/40 hover:bg-zinc-900/50 transition-all text-left group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-zinc-900 rounded-lg text-zinc-500 group-hover:text-amber-500 transition-colors">
+                        <Music size={16} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-zinc-200 group-hover:text-white transition-colors">{result.title}</h4>
+                        <p className="text-[10px] text-zinc-600 font-medium truncate max-w-[200px] md:max-w-md">{result.snippet}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[9px] font-black bg-zinc-950 px-2 py-1 rounded-md text-zinc-500 uppercase tracking-tighter">TAB / CHORDS</span>
+                      <ArrowRight size={14} className="text-zinc-800 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isSearching && (
+            <div className="mt-4 flex items-center gap-3 text-zinc-600 px-2 animate-pulse">
+              <Loader2 size={14} className="animate-spin" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Searching online sources...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Management Grid */}

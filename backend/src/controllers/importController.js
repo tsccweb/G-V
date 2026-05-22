@@ -1,21 +1,46 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache',
+};
+
 exports.searchOnline = async (req, res) => {
   const { q } = req.query;
   if (!q) return res.status(400).json({ error: 'Search query required' });
 
   try {
-    // For MVP, we'll mock a search result or scrape a specific site.
-    // Let's simulate a search across common worship sites.
-    // In a real scenario, we'd use a search API or more complex scrapers.
-    const results = [
-      { id: '1', title: `${q} - Worthy of It All`, artist: 'CeCe Winans', source: 'WorshipChords' },
-      { id: '2', title: `${q} - Way Maker`, artist: 'Leeland', source: 'WorshipTogether' }
-    ];
+    // Search Ultimate Guitar via DuckDuckGo
+    const searchUrl = `https://html.duckduckgo.com/html/?q=site:ultimate-guitar.com+${encodeURIComponent(q)}+chords`;
+    const { data } = await axios.get(searchUrl, { headers: BROWSER_HEADERS });
+    const $ = cheerio.load(data);
+    
+    const results = [];
+    $('.result__body').each((i, el) => {
+      const title = $(el).find('.result__title a').text().trim();
+      const url = $(el).find('.result__title a').attr('href');
+      const snippet = $(el).find('.result__snippet').text().trim();
+      
+      // DuckDuckGo results go through a redirector, we need to extract the real URL if possible
+      // or just use the link as is if it works.
+      if (url && url.includes('tabs.ultimate-guitar.com')) {
+        results.push({
+          title: title.replace(' | Ultimate-Guitar.Com', '').replace(' Chords', ''),
+          url: url,
+          snippet: snippet,
+          source: 'Ultimate Guitar'
+        });
+      }
+    });
+
     res.json(results);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to search online' });
+    console.error('Search Error:', error.message);
+    res.status(500).json({ error: 'Failed to search online.' });
   }
 };
 
@@ -24,16 +49,60 @@ exports.importSong = async (req, res) => {
   if (!url) return res.status(400).json({ error: 'URL required' });
 
   try {
-    const { data } = await axios.get(url);
+    const { data } = await axios.get(url, { headers: BROWSER_HEADERS });
     const $ = cheerio.load(data);
     
-    // Example scraping logic (specific to a site)
-    const title = $('h1').first().text().trim() || 'Untitled Song';
-    const artist = $('.artist').first().text().trim() || 'Unknown Artist';
-    const lyrics = $('.lyrics, .chords').first().text().trim() || 'No content found';
+    let songData = {
+      title: '',
+      artist: '',
+      lyrics: '',
+      chords: '',
+      sourceUrl: url
+    };
 
-    res.json({ title, artist, lyrics, sourceUrl: url });
+    if (url.includes('ultimate-guitar.com')) {
+      const storeData = $("div[class='js-store']").attr("data-content");
+      if (storeData) {
+        const json = JSON.parse(storeData);
+        const tabData = json.store.page.data.tab;
+        songData.title = tabData.song_name;
+        songData.artist = tabData.artist_name;
+        songData.lyrics = json.store.page.data.tab_view.wiki_tab.content || '';
+        songData.key = tabData.tonality_name || '';
+      }
+    } else if (url.includes('songsterr.com')) {
+      // Find window.STATE or similar
+      const scripts = $('script');
+      scripts.each((i, el) => {
+        const content = $(el).html();
+        if (content.includes('window.STATE')) {
+          const jsonMatch = content.match(/window\.STATE\s*=\s*(.*?);/);
+          if (jsonMatch) {
+            try {
+              const state = JSON.parse(jsonMatch[1]);
+              songData.title = state.song.title;
+              songData.artist = state.song.artist;
+              // Chords are harder on Songsterr as they use a custom JSON format
+              // We'll fallback to generic text extraction or a specific parser
+            } catch (e) {}
+          }
+        }
+      });
+    }
+
+    // Generic Fallback if specific parsers failed to get lyrics
+    if (!songData.lyrics) {
+      songData.title = songData.title || $('h1').first().text().trim() || 'Untitled Song';
+      songData.artist = songData.artist || $('.artist').first().text().trim() || 'Unknown Artist';
+      
+      // Look for pre or specific containers
+      const content = $('pre, .lyrics, .chords, .tab-content').first().text().trim();
+      songData.lyrics = content || 'No content found';
+    }
+
+    res.json(songData);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to import song from URL' });
+    console.error('Import Error:', error.message);
+    res.status(500).json({ error: 'Failed to import song from URL. The site might be blocking us.' });
   }
 };

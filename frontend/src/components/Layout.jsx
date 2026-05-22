@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Music, Home, Calendar, Users, Settings, LogOut, Menu, X, Lock, LayoutList, AlertTriangle } from 'lucide-react';
+import { Music, Home, Calendar, Users, Settings, LogOut, Menu, X, Lock, LayoutList, AlertTriangle, Bell } from 'lucide-react';
+import NotificationTray from './NotificationTray';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
@@ -95,7 +96,31 @@ function Layout({ children }) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-[100dvh] relative bg-black">
-        {/* Desktop Header/Padding could go here if needed, but keeping it clean */}
+        {/* Global Top Header */}
+        <header className="h-16 md:h-20 border-b border-zinc-900 flex items-center justify-between px-6 bg-black/50 backdrop-blur-xl z-[40]">
+          <div className="lg:hidden">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-zinc-100 to-zinc-500 bg-clip-text text-transparent">
+              {'G>/\\V'}
+            </h2>
+          </div>
+          <div className="hidden lg:block">
+            {/* Breadcrumb or Page Title placeholder */}
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <NotificationTray />
+            <div className="h-8 w-[1px] bg-zinc-800 hidden md:block" />
+            <div className="flex items-center gap-3 desktop-only hidden md:flex">
+              <div className="text-right">
+                <p className="text-xs font-bold text-zinc-300">{user?.firstName}</p>
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-tighter">{user?.role}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-[10px] font-black border border-zinc-700">
+                {user?.firstName?.[0]}
+              </div>
+            </div>
+          </div>
+        </header>
 
         <main className="flex-1 overflow-y-auto w-full pb-20 md:pb-0">
           <AnimatePresence mode="wait">

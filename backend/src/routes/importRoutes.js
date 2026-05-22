@@ -6,7 +6,7 @@ const { planGuard } = require('../middlewares/planGuard');
 const router = express.Router();
 
 router.use(authMiddleware);
-router.use(planGuard('PRO')); // Restrict to PRO plan
+router.use(planGuard('FREE')); // Allow FREE for testing (was PRO)
 
 router.get('/search', searchOnline);
 router.post('/import', importSong);

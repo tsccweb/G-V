@@ -237,7 +237,18 @@ exports.addToLineup = async (req, res) => {
         role: role || 'MEMBER',
         status: 'PENDING'
       },
-      include: { user: { select: { firstName: true, lastName: true } } }
+      include: { 
+        user: { select: { firstName: true, lastName: true } },
+        service: { select: { title: true } }
+      }
+    });
+
+    // Create Notification
+    await prisma.notification.create({
+      data: {
+        userId: memberId,
+        message: `You've been invited to join the ${lineup.role} team for "${lineup.service.title}"`
+      }
     });
 
     res.status(201).json(lineup);
@@ -302,6 +313,25 @@ exports.respondToInvitation = async (req, res) => {
       data: { status }
     });
     if (inv.count === 0) return res.status(404).json({ error: 'Invitation not found' });
+
+    // Find the lineup member and service to notify the creator
+    const lineupMember = await prisma.lineup.findFirst({
+      where: { id: id },
+      include: { 
+        user: { select: { firstName: true, lastName: true } },
+        service: { select: { title: true, userId: true } }
+      }
+    });
+
+    if (lineupMember) {
+      await prisma.notification.create({
+        data: {
+          userId: lineupMember.service.userId,
+          message: `${lineupMember.user.firstName} ${lineupMember.user.lastName} has ${status.toLowerCase()} the invitation for "${lineupMember.service.title}"`
+        }
+      });
+    }
+
     res.json({ message: `Invitation ${status.toLowerCase()}` });
   } catch (error) {
     res.status(400).json({ error: 'Failed to update invitation status' });
