@@ -87,7 +87,6 @@ function Login() {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center px-1">
                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Password</label>
-                <Link to="/forgot-password" size="sm" className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-widest cursor-pointer">Forgot?</Link>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-white transition-colors" size={18} />
@@ -106,6 +105,9 @@ function Login() {
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
+              </div>
+              <div className="flex justify-end px-1">
+                <Link to="/forgot-password" core="sm" className="text-[10px] font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-widest cursor-pointer">Forgot Password?</Link>
               </div>
             </div>
 
