@@ -1,30 +1,45 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// pdf-parse returns a default export function
-let pdf;
-let pdfLoadError = null;
+// pdf-parse with robust loading
+let pdfParser = null;
 
-try {
-  const pdfModule = require('pdf-parse');
-  console.log('[PDF-Parse] Module loaded successfully');
-  console.log('[PDF-Parse] Type of module:', typeof pdfModule);
-  console.log('[PDF-Parse] Has default export:', !!pdfModule.default);
-  console.log('[PDF-Parse] Module keys:', Object.keys(pdfModule));
+const initPdfParser = async () => {
+  if (pdfParser) return pdfParser;
   
-  pdf = pdfModule.default || pdfModule;
-  
-  console.log('[PDF-Parse] PDF function type:', typeof pdf);
-  if (typeof pdf !== 'function') {
-    console.error('[PDF-Parse] ERROR: PDF is not a function!', typeof pdf);
-  } else {
-    console.log('[PDF-Parse] Successfully assigned PDF parser function');
+  try {
+    console.log('[PDF-Init] Initializing pdf-parse module');
+    const pdfModule = require('pdf-parse');
+    
+    // pdf-parse v2.4.5 exports as default
+    if (typeof pdfModule === 'function') {
+      console.log('[PDF-Init] Using module directly as function');
+      pdfParser = pdfModule;
+    } else if (pdfModule.default && typeof pdfModule.default === 'function') {
+      console.log('[PDF-Init] Using module.default as function');
+      pdfParser = pdfModule.default;
+    } else {
+      console.error('[PDF-Init] Module is not callable:', {
+        type: typeof pdfModule,
+        keys: Object.keys(pdfModule),
+        defaultType: typeof pdfModule.default
+      });
+    }
+    
+    console.log('[PDF-Init] PDF parser initialized:', !!pdfParser);
+    return pdfParser;
+  } catch (e) {
+    console.error('[PDF-Init] Failed to load pdf-parse:', {
+      message: e.message,
+      code: e.code,
+      stack: e.stack
+    });
+    return null;
   }
-} catch (e) {
-  pdfLoadError = e;
-  console.error('[PDF-Parse] Failed to load module:', e.message);
-  console.error('[PDF-Parse] Stack:', e.stack);
-}
+};
+
+// Initialize on module load
+initPdfParser();
 
 const BROWSER_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -176,31 +191,31 @@ exports.importPdf = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
   try {
-    console.log('[PDF-Import] Starting PDF import');
-    console.log('[PDF-Import] PDF available:', !!pdf);
-    console.log('[PDF-Import] PDF type:', typeof pdf);
+    console.log('[PDF-Import] Starting PDF import, buffer size:', req.file.buffer?.length);
+    
+    // Ensure PDF parser is initialized
+    const pdf = await initPdfParser();
     
     if (!pdf || typeof pdf !== 'function') {
-      const errorMsg = pdfLoadError 
-        ? `PDF parser failed to load: ${pdfLoadError.message}`
-        : `PDF parser not available (type: ${typeof pdf})`;
-      console.error('[PDF-Import] ERROR:', errorMsg);
-      return res.status(500).json({ error: 'PDF parsing service unavailable. Please try again.', debug: errorMsg });
+      console.error('[PDF-Import] ERROR: PDF parser not available');
+      return res.status(500).json({ error: 'PDF parsing service unavailable. Please try again.' });
     }
 
-    console.log('[PDF-Import] Buffer size:', req.file.buffer.length);
+    console.log('[PDF-Import] Parsing PDF buffer...');
     let data;
     try {
       data = await pdf(req.file.buffer);
-      console.log('[PDF-Import] PDF parsed successfully');
+      console.log('[PDF-Import] PDF parsed successfully, text length:', data.text?.length);
     } catch (parseErr) {
-      console.error('[PDF-Import] PDF parsing error:', parseErr.message);
-      console.error('[PDF-Import] Parse error stack:', parseErr.stack);
+      console.error('[PDF-Import] Parsing error:', {
+        message: parseErr.message,
+        stack: parseErr.stack,
+        bufferSize: req.file.buffer.length
+      });
       throw parseErr;
     }
 
-    const text = data.text;
-    console.log('[PDF-Import] Extracted text length:', text.length);
+    const text = data?.text;
 
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ error: 'PDF contains no readable text. Please ensure it is a valid text-based PDF.' });
@@ -225,9 +240,14 @@ exports.importPdf = async (req, res) => {
       songData.artist = parts[1].trim();
     }
 
+    console.log('[PDF-Import] Success:', { title: songData.title, artist: songData.artist, lyricsLength: songData.lyrics.length });
     res.json(songData);
   } catch (error) {
-    console.error('PDF Import Error - Full Stack:', error);
-    res.status(500).json({ error: 'Failed to parse PDF content. Please ensure it is a valid text-based PDF.', details: error.message });
+    console.error('[PDF-Import] Unhandled error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.status(500).json({ error: 'Failed to parse PDF content.', debug: error.message });
   }
 };
