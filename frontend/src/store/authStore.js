@@ -37,6 +37,8 @@ const useAuthStore = create((set) => ({
     });
   },
 
+  setUser: (user) => set({ user }),
+
   setError: (message) => {
     set({ error: message, isLoading: false });
     setTimeout(() => set({ error: null }), 3000);

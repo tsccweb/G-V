@@ -101,7 +101,8 @@ exports.updateMe = async (req, res) => {
         firstName: firstName !== undefined ? firstName : undefined,
         middleName: middleName !== undefined ? middleName : undefined,
         lastName: lastName !== undefined ? lastName : undefined,
-        phone: phone !== undefined ? phone : undefined
+        phone: phone !== undefined ? phone : undefined,
+        role: role !== undefined ? role : undefined
       },
       select: {
         id: true, email: true, firstName: true, middleName: true, lastName: true,

@@ -217,8 +217,8 @@ function LiveWorshipMode() {
       const deltaTime = currentTime - lastTime;
       
       // Speed calculation: Quadratic scale for better range
-      // 1: ~15px/s, 5: ~135px/s, 10: ~510px/s
-      const pixelsPerSecond = Math.pow(scrollSpeed, 2) * 5 + 10;
+      // 1: ~40px/s, 5: ~520px/s, 10: ~2020px/s
+      const pixelsPerSecond = Math.pow(scrollSpeed, 2) * 20 + 20;
       const distance = (pixelsPerSecond * deltaTime) / 1000;
       
       if (scrollRef.current && !isJumping.current) {

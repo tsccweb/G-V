@@ -18,6 +18,10 @@ const FONTS = [
 ];
 const BG_COLORS = ['#000000', '#1A237E', '#3E2723', '#1A1A1A', '#0D47A1', '#263238'];
 const TEXT_COLORS = ['#FFFFFF', '#B0BEC5', '#FFC107', '#69F0AE', '#D1C4E9', '#000000'];
+const ROLES = [
+  'ADMIN', 'PASTOR', 'WORSHIP_LEADER', 'MUSICIAN', 'VOCALIST', 
+  'SCRIPTURE_READER', 'PRAYER_LEADER', 'MEDIA_TEAM', 'SOUND_TEAM', 'MEMBER'
+];
 
 /* ── Accordion button ── */
 function AccordionBtn({ icon: Icon, label, isOpen, onClick, description }) {
@@ -81,7 +85,7 @@ function Field({ label, ...props }) {
 export default function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, logout } = useAuthStore();
+  const { user, logout, setUser } = useAuthStore();
 
   /* ── Accordion state ── */
   const [openSection, setOpenSection] = useState(null); // 'display' | 'profile' | 'password'
@@ -90,7 +94,10 @@ export default function SettingsPage() {
   /* ── Data state ── */
   const [ls, setLs] = useState(null);
   const [profile, setProfile] = useState({
-    firstName: user?.firstName || '', lastName: user?.lastName || '', phone: user?.phone || '',
+    firstName: user?.firstName || '', 
+    lastName: user?.lastName || '', 
+    phone: user?.phone || '',
+    role: user?.role || 'MEMBER'
   });
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
   const [pwMsg, setPwMsg] = useState(null);
@@ -119,9 +126,13 @@ export default function SettingsPage() {
     mutationFn: d => updateSettings(d),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] }),
   });
+
   const profileMut = useMutation({
     mutationFn: d => updateProfile(d),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
   });
   const resetMut = useMutation({
     mutationFn: resetSettings,
@@ -251,6 +262,18 @@ export default function SettingsPage() {
                   </div>
                   <Field label="Phone" type="tel" value={profile.phone}
                     onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} />
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider ml-1">Position</label>
+                    <select 
+                      value={profile.role}
+                      onChange={e => setProfile(p => ({ ...p, role: e.target.value }))}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:border-zinc-500 focus:outline-none transition-colors appearance-none"
+                    >
+                      {ROLES.map(r => (
+                        <option key={r} value={r}>{r.replace('_', ' ')}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </motion.div>
             )}
