@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createSong, updateSong, getSongById } from '../services/songService';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, X, Maximize2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 function SongForm() {
@@ -10,6 +10,7 @@ function SongForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isEdit = !!id;
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -41,6 +42,17 @@ function SongForm() {
     }
   }, [song]);
 
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isFullscreen]);
+
   const mutation = useMutation({
     mutationFn: (data) => isEdit ? updateSong(id, data) : createSong(data),
     onSuccess: (data) => {
@@ -68,6 +80,32 @@ function SongForm() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex flex-col p-6">
+        <div className="absolute top-6 right-6 z-50">
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="flex items-center justify-center w-12 h-12 bg-white text-black rounded-lg hover:bg-zinc-200 transition-all font-bold"
+            title="Exit Fullscreen"
+          >
+            <X size={24} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto pt-12 pb-6">
+          <textarea
+            name="lyrics"
+            value={formData.lyrics}
+            onChange={handleChange}
+            className="w-full h-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-sm resize-none"
+            placeholder="[G]Amazing grace, how [C]sweet the [G]sound..."
+            required
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
@@ -190,9 +228,20 @@ function SongForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-400 mb-1">
-            Lyrics & Chords (ChordPro format: [G]Amazing [C]grace)
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-zinc-400 mb-1">
+              Lyrics & Chords (ChordPro format: [G]Amazing [C]grace)
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              className="flex items-center justify-center gap-2 px-3 py-1 text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg border border-zinc-800 hover:border-zinc-700 transition-all"
+              title="Fullscreen Edit"
+            >
+              <Maximize2 size={14} />
+              <span>Fullscreen</span>
+            </button>
+          </div>
           <textarea
             name="lyrics"
             value={formData.lyrics}

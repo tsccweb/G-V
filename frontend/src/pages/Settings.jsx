@@ -1,6 +1,6 @@
 import React from 'react';
 import useAuthStore from '../store/authStore';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, Calendar } from 'lucide-react';
 
 function Settings() {
   const { user, logout } = useAuthStore();
@@ -24,7 +24,7 @@ function Settings() {
         </div>
 
         <div className="space-y-6 text-zinc-400">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-black rounded-2xl border border-zinc-800/50">
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Role</p>
               <p className="text-lg font-bold text-white">{user?.role?.replace('_', ' ')}</p>
@@ -33,6 +33,21 @@ function Settings() {
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Plan</p>
               <p className="text-lg font-bold text-white">{user?.plan}</p>
             </div>
+            {user?.planExpiresAt && (
+              <div className="p-4 bg-black rounded-2xl border border-zinc-800/50">
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                  <Calendar size={12} />
+                  Plan Expires
+                </p>
+                <p className="text-lg font-bold text-blue-400">
+                  {new Date(user.planExpiresAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

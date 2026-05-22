@@ -17,6 +17,11 @@ exports.register = async (req, res) => {
     if (existing) return res.status(409).json({ error: 'Email already registered' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Set STANDARD plan to expire in 1 month
+    const planExpiresAt = new Date();
+    planExpiresAt.setMonth(planExpiresAt.getMonth() + 1);
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -26,6 +31,8 @@ exports.register = async (req, res) => {
         lastName,
         phone: phone || null,
         role: role || 'MEMBER',
+        plan: 'STANDARD', // New accounts get STANDARD plan
+        planExpiresAt: planExpiresAt, // Expires in 1 month
         settings: { create: {} } // Create default settings
       },
       include: { settings: true }
@@ -82,7 +89,7 @@ exports.getMe = async (req, res) => {
       where: { id: req.user.userId },
       select: {
         id: true, email: true, firstName: true, middleName: true, lastName: true,
-        phone: true, role: true, plan: true, settings: true
+        phone: true, role: true, plan: true, planExpiresAt: true, settings: true
       }
     });
     res.json(user);

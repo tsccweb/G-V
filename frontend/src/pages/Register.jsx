@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleLogin } from '@react-oauth/google';
-import { UserPlus, Eye, EyeOff, Mail, Phone, User, Shield, ArrowRight, Chrome, AlertCircle } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Mail, Phone, User, Shield, ArrowRight, Chrome, AlertCircle, Gift } from 'lucide-react';
 import useAuthStore from '../store/authStore';
+import toast from 'react-hot-toast';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -12,8 +13,18 @@ function Register() {
     role: 'MEMBER'
   });
   const [showPassword, setShowPassword] = useState(false);
-  const { register, googleLogin, isLoading, error } = useAuthStore();
+  const { user, register, googleLogin, isLoading, error } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      toast.success('🎉 Welcome! You have 1 month FREE access to Standard plan!', {
+        duration: 6000,
+        icon: <Gift size={20} className="text-yellow-400" />
+      });
+      setTimeout(() => navigate('/'), 1500);
+    }
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));

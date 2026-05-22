@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getSongById, deleteSong } from '../services/songService';
 import { getSettings } from '../services/settingsService';
-import { ChevronLeft, Edit, Clock, Tag as TagIcon, Trash2, X, Maximize2 } from 'lucide-react';
+import { ChevronLeft, Edit, Clock, Tag as TagIcon, Trash2 } from 'lucide-react';
 import ChordSheetJS from 'chordsheetjs';
 
 function SongDetail() {
@@ -12,7 +12,7 @@ function SongDetail() {
   const [transpose, setTranspose] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(2);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -39,17 +39,6 @@ function SongDetail() {
       deleteMutation.mutate();
     }
   };
-
-  useEffect(() => {
-    if (isFullscreen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [isFullscreen]);
 
   if (isLoading) return <div className="p-8 text-center text-zinc-400">Loading song...</div>;
   if (error) return <div className="p-8 text-center text-white">Error loading song</div>;
@@ -172,34 +161,6 @@ function SongDetail() {
     return line.replace(/\[(.*?)\]/g, '<span class="chord">$1</span>');
   }).join('\n');
 
-  if (isFullscreen) {
-    return (
-      <div className="fixed inset-0 z-50 bg-black flex flex-col p-6">
-        <div className="absolute top-6 right-6 z-50">
-          <button
-            onClick={() => setIsFullscreen(false)}
-            className="flex items-center justify-center w-12 h-12 bg-white text-black rounded-lg hover:bg-zinc-200 transition-all font-bold"
-            title="Exit Fullscreen"
-          >
-            <X size={24} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-auto pt-12">
-          <div
-            className="chord-sheet"
-            style={{ fontSize: `${fontSize}px` }}
-          >
-            <pre
-              className="bg-transparent border-none p-0 overflow-visible leading-[1.1]"
-              style={{ fontSize: 'inherit', fontFamily: 'inherit', color: 'inherit' }}
-              dangerouslySetInnerHTML={{ __html: highlighted }}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
       {/* Sidebar Navigator */}
@@ -307,16 +268,7 @@ function SongDetail() {
           </div>
         </header>
 
-        <section className="bg-black/50 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-x-auto relative">
-          <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-            <button
-              onClick={() => setIsFullscreen(true)}
-              className="flex items-center justify-center w-10 h-10 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg border border-zinc-800 hover:border-zinc-700 transition-all"
-              title="Toggle Fullscreen"
-            >
-              <Maximize2 size={18} />
-            </button>
-          </div>
+        <section className="bg-black/50 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-x-auto">
           <div
             className="chord-sheet p-8 md:p-12"
             style={{ fontSize: `${fontSize}px` }}
