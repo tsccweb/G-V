@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getSongById, deleteSong } from '../services/songService';
 import { getSettings } from '../services/settingsService';
-import { ChevronLeft, Edit, Clock, Tag as TagIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, Edit, Clock, Tag as TagIcon, Trash2, X, Maximize2 } from 'lucide-react';
 import ChordSheetJS from 'chordsheetjs';
 
 function SongDetail() {
@@ -12,6 +12,7 @@ function SongDetail() {
   const [transpose, setTranspose] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(2);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -287,7 +288,19 @@ function SongDetail() {
           </div>
         </header>
 
-        <section className="bg-black/50 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-x-auto relative">
+        <section 
+          className={isFullscreen ? 'fixed inset-0 z-50 bg-black p-4 md:p-8 overflow-x-auto' : 'bg-black/50 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-x-auto relative cursor-pointer hover:border-zinc-700 transition-colors'}
+          onClick={() => !isFullscreen && setIsFullscreen(true)}
+        >
+          <div className="absolute top-4 right-4 z-50 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="flex items-center justify-center w-10 h-10 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg border border-zinc-800 hover:border-zinc-700 transition-all"
+              title="Toggle Fullscreen"
+            >
+              {isFullscreen ? <X size={18} /> : <Maximize2 size={18} />}
+            </button>
+          </div>
           <div
             className="chord-sheet p-8 md:p-12"
             style={{ fontSize: `${fontSize}px` }}
