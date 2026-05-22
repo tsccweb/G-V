@@ -73,7 +73,7 @@ function Dashboard() {
       
       setImportSuccess(true);
       queryClient.invalidateQueries(['songs']);
-      setTimeout(() => navigate(`/songs?id=${newSong.id}`), 1500);
+      setTimeout(() => navigate('/songs'), 1500);
     } catch (error) {
       console.error('PDF Import failed:', error);
       setImportError(error.response?.data?.error || 'Failed to parse PDF.');
