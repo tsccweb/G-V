@@ -13,6 +13,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [importUrl, setImportUrl] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState(null);
   const [importSuccess, setImportSuccess] = useState(false);
@@ -21,7 +22,7 @@ function Dashboard() {
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    if (!importUrl || importUrl.startsWith('http')) {
+    if (!searchQuery || searchQuery.trim().length < 2) {
       setSearchResults([]);
       return;
     }
@@ -29,7 +30,7 @@ function Dashboard() {
     const delayDebounceFn = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const results = await searchOnline(importUrl);
+        const results = await searchOnline(searchQuery);
         setSearchResults(results);
       } catch (error) {
         console.error('Search failed:', error);
@@ -39,7 +40,7 @@ function Dashboard() {
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [importUrl]);
+  }, [searchQuery]);
 
   const { data: services } = useQuery({
     queryKey: ['services'],
@@ -163,111 +164,115 @@ function Dashboard() {
         </Link>
       </div>
 
-      {/* Magic Import Section */}
-      <div className="bg-zinc-900/50 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-          <Sparkles size={120} className="text-amber-500" />
-        </div>
-        
-        <div className="relative z-10 flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500">
-              <Wand2 size={24} />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black tracking-tight uppercase">Magic Import</h2>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Automagically add songs from UG or Songsterr</p>
-            </div>
+      {/* Action Hub */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* Card 1: Online Search */}
+        <div className="bg-zinc-900/40 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group h-full flex flex-col">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Search size={120} className="text-blue-500" />
           </div>
+          <div className="relative z-10 space-y-6 flex-1">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
+                <Search size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase italic tracking-tighter">Quick Search</h3>
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Find songs on Ultimate Guitar</p>
+              </div>
+            </div>
 
-          <form onSubmit={handleMagicImport} className="flex flex-col md:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Paste Ultimate Guitar or Songsterr URL here..."
-              value={importUrl}
-              onChange={(e) => setImportUrl(e.target.value)}
-              className="flex-1 bg-black border border-zinc-800 rounded-2xl px-6 py-4 text-sm font-medium focus:border-amber-500/50 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all placeholder:text-zinc-700"
-              disabled={isImporting}
-            />
-            <button
-              type="submit"
-              disabled={isImporting || !importUrl}
-              className={`px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 min-w-[160px] ${
-                isImporting 
-                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
-                  : 'bg-amber-500 text-black hover:bg-amber-400 active:scale-95 shadow-lg shadow-amber-500/20'
-              }`}
-            >
-              {isImporting ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Working...
-                </>
-              ) : importSuccess ? (
-                <>
-                  <CheckCircle2 size={18} />
-                  Success!
-                </>
-              ) : (
-                'Import Now'
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search song, artist..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-black/50 border border-zinc-800 rounded-2xl px-6 py-4 text-sm font-medium focus:border-blue-500/50 outline-none transition-all placeholder:text-zinc-700"
+              />
+              {isSearching && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <Loader2 size={16} className="animate-spin text-zinc-600" />
+                </div>
               )}
-            </button>
-          </form>
-
-          {importError && (
-            <div className="flex items-center gap-2 text-red-500 text-xs font-bold bg-red-500/5 p-3 rounded-xl border border-red-500/10 animate-in fade-in slide-in-from-top-1">
-              <AlertCircle size={14} />
-              {importError}
             </div>
-          )}
-          
-          {importSuccess && (
-            <div className="flex items-center gap-2 text-emerald-500 text-xs font-bold bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10 animate-in fade-in slide-in-from-top-1">
-              <CheckCircle2 size={14} />
-              Song imported! Redirecting to library...
-            </div>
-          )}
 
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest px-2">Top Results from Ultimate Guitar</p>
-              <div className="grid grid-cols-1 gap-2">
-                {searchResults.slice(0, 5).map((result, idx) => (
+            {searchResults.length > 0 && (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                {searchResults.slice(0, 6).map((result, idx) => (
                   <button
                     key={idx}
                     onClick={() => {
                       setImportUrl(result.url);
                       setSearchResults([]);
-                      // Trigger import immediately?
+                      setSearchQuery('');
                     }}
-                    className="flex items-center justify-between p-4 bg-black border border-zinc-900 rounded-2xl hover:border-amber-500/40 hover:bg-zinc-900/50 transition-all text-left group"
+                    className="w-full flex items-center justify-between p-4 bg-black border border-zinc-900 rounded-2xl hover:border-blue-500/40 hover:bg-zinc-900/50 transition-all text-left"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 bg-zinc-900 rounded-lg text-zinc-500 group-hover:text-amber-500 transition-colors">
-                        <Music size={16} />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-zinc-200 group-hover:text-white transition-colors">{result.title}</h4>
-                        <p className="text-[10px] text-zinc-600 font-medium truncate max-w-[200px] md:max-w-md">{result.snippet}</p>
-                      </div>
+                    <div className="flex-1 min-w-0 pr-4">
+                      <h4 className="text-sm font-bold text-zinc-200 truncate">{result.title}</h4>
+                      <p className="text-[10px] text-zinc-600 font-bold uppercase truncate">{result.source}</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[9px] font-black bg-zinc-950 px-2 py-1 rounded-md text-zinc-500 uppercase tracking-tighter">TAB / CHORDS</span>
-                      <ArrowRight size={14} className="text-zinc-800 group-hover:text-white group-hover:translate-x-1 transition-all" />
-                    </div>
+                    <ArrowRight size={14} className="text-zinc-800" />
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
 
-          {isSearching && (
-            <div className="mt-4 flex items-center gap-3 text-zinc-600 px-2 animate-pulse">
-              <Loader2 size={14} className="animate-spin" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Searching online sources...</span>
+        {/* Card 2: Direct Import */}
+        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group h-full flex flex-col">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Wand2 size={120} className="text-amber-500" />
+          </div>
+          <div className="relative z-10 space-y-6 flex-1">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
+                <Wand2 size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase italic tracking-tighter">Magic Import</h3>
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Import via UG or Songsterr URL</p>
+              </div>
             </div>
-          )}
+
+            <form onSubmit={handleMagicImport} className="space-y-4">
+              <input
+                type="text"
+                placeholder="https://tabs.ultimate-guitar.com/..."
+                value={importUrl}
+                onChange={(e) => setImportUrl(e.target.value)}
+                className="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 text-sm font-medium focus:border-amber-500/50 outline-none transition-all placeholder:text-zinc-700"
+                disabled={isImporting}
+              />
+              <button
+                type="submit"
+                disabled={isImporting || !importUrl}
+                className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${
+                  isImporting 
+                    ? 'bg-zinc-800 text-zinc-500' 
+                    : 'bg-white text-black hover:bg-zinc-200 active:scale-95'
+                }`}
+              >
+                {isImporting ? <Loader2 size={18} className="animate-spin" /> : 'Import Now'}
+              </button>
+            </form>
+
+            {importError && (
+              <div className="flex items-center gap-2 text-red-500 text-[10px] font-bold bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
+                <AlertCircle size={14} className="shrink-0" />
+                {importError}
+              </div>
+            )}
+            
+            {importSuccess && (
+              <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
+                <CheckCircle2 size={14} className="shrink-0" />
+                Success! Redirecting to library...
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
