@@ -107,7 +107,7 @@ function LiveWorshipMode() {
     const lyrics = rawSong.lyrics.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
     // Split by section markers like [Verse 1]
-    const sectionRegex = /(\[(?:Verse|Chorus|Bridge|Intro|Outro|Tag|Refrain|Instrumental|Solo|Interlude|Ending|VAMP).*?\])/i;
+    const sectionRegex = /(\[(?:Verse|Chorus|Bridge|Intro|Outro|Tag|Refrain|Instrumental|Solo|Interlude|Ending|VAMP|Pre-Chorus|PreChorus).*?\])/i;
     const parts = lyrics.split(sectionRegex);
 
     const result = [];
@@ -415,7 +415,7 @@ function LiveWorshipMode() {
               <button
                 key={idx}
                 onClick={(e) => { e.stopPropagation(); jumpToSection(sec.index); }}
-                className={`px-2.5 py-1.5 md:w-28 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] font-black tracking-wide md:tracking-widest transition-all border ${currentSlideIndex === sec.index
+                className={`px-2.5 py-1.5 md:w-28 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] font-black tracking-wide md:tracking-widest transition-all border ${slides[currentSlideIndex]?.label === sec.label
                   ? 'bg-amber-500 text-black border-amber-400 shadow-lg shadow-amber-500/30'
                   : 'bg-zinc-900/80 text-zinc-500 border-zinc-700/50 hover:text-amber-400 hover:border-amber-500/50 backdrop-blur-xl'
                   }`}
