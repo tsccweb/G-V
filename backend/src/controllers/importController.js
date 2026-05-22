@@ -11,10 +11,13 @@ const initPdfParser = async () => {
     console.log('[PDF-Init] Initializing pdf-parse module');
     const pdfModule = require('pdf-parse');
     
-    // pdf-parse v2.4.5 exports as default
+    // pdf-parse v2.4.5 exports parser as PDFParse in CJS mode
     if (typeof pdfModule === 'function') {
       console.log('[PDF-Init] Using module directly as function');
       pdfParser = pdfModule;
+    } else if (pdfModule.PDFParse && typeof pdfModule.PDFParse === 'function') {
+      console.log('[PDF-Init] Using pdfModule.PDFParse as function');
+      pdfParser = pdfModule.PDFParse;
     } else if (pdfModule.default && typeof pdfModule.default === 'function') {
       console.log('[PDF-Init] Using module.default as function');
       pdfParser = pdfModule.default;
@@ -22,7 +25,8 @@ const initPdfParser = async () => {
       console.error('[PDF-Init] Module is not callable:', {
         type: typeof pdfModule,
         keys: Object.keys(pdfModule),
-        defaultType: typeof pdfModule.default
+        defaultType: typeof pdfModule.default,
+        pdfParseType: typeof pdfModule.PDFParse
       });
     }
     
