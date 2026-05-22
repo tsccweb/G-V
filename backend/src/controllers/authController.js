@@ -148,14 +148,46 @@ exports.forgotPassword = async (req, res) => {
         to: [{ email }],
         subject: 'Your Password Reset Code',
         htmlContent: `
-          <div style="font-family: sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-            <h2 style="color: #000; text-align: center;">Reset Password</h2>
-            <p style="color: #666; font-size: 14px; text-align: center;">Use the code below to reset your password. This code expires in 15 minutes.</p>
-            <div style="background: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; border-radius: 8px; margin: 20px 0;">
-              ${otpCode}
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { margin: 0; padding: 0; background-color: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #ffffff; }
+              .container { max-width: 600px; margin: 40px auto; padding: 40px; background: #000000; border: 1px solid #333333; border-radius: 24px; }
+              .logo { text-align: center; margin-bottom: 40px; }
+              .logo h1 { font-size: 32px; font-weight: 900; letter-spacing: -2px; margin: 0; background: linear-gradient(to bottom, #ffffff, #888888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+              .content { text-align: center; }
+              .title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+              .subtitle { color: #888888; font-size: 14px; margin-bottom: 32px; }
+              .code-container { background: #111111; border: 1px solid #222222; border-radius: 16px; padding: 32px; margin: 24px 0; }
+              .code { font-size: 48px; font-weight: 900; letter-spacing: 8px; color: #ffffff; line-height: 1; }
+              .footer { text-align: center; margin-top: 40px; color: #555555; font-size: 12px; }
+              .divider { height: 1px; background: #222222; margin: 32px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="logo">
+                <h1>G&gt;/\\V</h1>
+              </div>
+              <div class="content">
+                <div class="title">Reset Your Password</div>
+                <div class="subtitle">Use the verification code below to reset your account password. This code will expire in 15 minutes.</div>
+                
+                <div class="code-container">
+                  <div class="code">${otpCode}</div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="footer">
+                  If you didn't request this code, you can safely ignore this email.<br>
+                  &copy; ${new Date().getFullYear()} Psalms Worship. All rights reserved.
+                </div>
+              </div>
             </div>
-            <p style="color: #999; font-size: 11px; text-align: center;">If you didn't request this, please ignore this email.</p>
-          </div>
+          </body>
+          </html>
         `
       }, {
         headers: { 'api-key': brevoKey, 'Content-Type': 'application/json' }
