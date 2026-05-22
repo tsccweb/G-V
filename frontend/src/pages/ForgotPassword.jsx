@@ -137,13 +137,24 @@ export default function ForgotPassword() {
                   >
                     {isLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : 'Verify Code'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="w-full flex items-center justify-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
-                  >
-                    <ArrowLeft size={14} /> Back to Email
-                  </button>
+                  
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => forgotPassword(email)}
+                      className="w-full text-xs font-bold text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      Didn't get the code? <span className="text-emerald-500">Resend OTP</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="w-full flex items-center justify-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                    >
+                      <ArrowLeft size={14} /> Back to Email
+                    </button>
+                  </div>
                 </form>
               </motion.div>
             )}
