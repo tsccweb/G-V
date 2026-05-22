@@ -191,6 +191,14 @@ exports.importSong = async (req, res) => {
   }
 };
 
+const toUint8Array = (buffer) => {
+  if (buffer instanceof Uint8Array && !(buffer instanceof Buffer)) return buffer;
+  if (Buffer.isBuffer(buffer)) return new Uint8Array(buffer);
+  if (ArrayBuffer.isView(buffer)) return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  if (buffer instanceof ArrayBuffer) return new Uint8Array(buffer);
+  return new Uint8Array(buffer);
+};
+
 exports.importPdf = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
@@ -205,14 +213,16 @@ exports.importPdf = async (req, res) => {
       return res.status(500).json({ error: 'PDF parsing service unavailable. Please try again.' });
     }
 
-    console.log('[PDF-Import] Parsing PDF buffer...');
+    const pdfData = toUint8Array(req.file.buffer);
+    console.log('[PDF-Import] Parsing PDF buffer...', { pdfDataLength: pdfData.length });
+
     let data;
     try {
       if (pdf.prototype && typeof pdf.prototype.getText === 'function') {
-        const parserInstance = new pdf(req.file.buffer);
+        const parserInstance = new pdf({ data: pdfData });
         data = await parserInstance.getText();
       } else {
-        data = await pdf(req.file.buffer);
+        data = await pdf(pdfData);
       }
       console.log('[PDF-Import] PDF parsed successfully, text length:', data.text?.length);
     } catch (parseErr) {
@@ -220,6 +230,7 @@ exports.importPdf = async (req, res) => {
         message: parseErr.message,
         stack: parseErr.stack,
         bufferSize: req.file.buffer.length,
+        pdfDataLength: pdfData.length,
         parserType: typeof pdf,
         hasGetText: pdf?.prototype?.getText ? true : false
       });

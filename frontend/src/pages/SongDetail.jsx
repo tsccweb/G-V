@@ -278,7 +278,7 @@ function SongDetail() {
           <div className="flex flex-wrap gap-6 text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] pt-6 opacity-60">
             {song.key && (
               <span>
-                <span className="text-zinc-700 mr-2">ROOT</span>
+                <span className="text-zinc-700 mr-2">KEY</span>
                 {transposeChord(song.key, transpose)}
               </span>
             )}
