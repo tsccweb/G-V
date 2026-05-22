@@ -140,7 +140,7 @@ function Dashboard() {
 
       {/* Action Hub */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Card 1: PDF Import */
+        {/* Card 1: PDF Import */}
         <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group h-full flex flex-col">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
             <FileText size={120} className="text-amber-500" />
