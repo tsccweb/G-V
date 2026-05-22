@@ -41,24 +41,15 @@ function SongDetail() {
   };
 
   useEffect(() => {
-    let scrollTimer;
-    if (isScrolling) {
-      // Find the scrollable container - robust check
-      const container = document.querySelector('main.overflow-y-auto') ||
-        document.querySelector('main') ||
-        document.getElementById('scroll-container') ||
-        window;
-
-      scrollTimer = setInterval(() => {
-        if (container.scrollBy) {
-          container.scrollBy(0, 1);
-        } else if (container === window) {
-          window.scrollBy(0, 1);
-        }
-      }, 100 / scrollSpeed);
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
     }
-    return () => clearInterval(scrollTimer);
-  }, [isScrolling, scrollSpeed]);
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isFullscreen]);
 
   if (isLoading) return <div className="p-8 text-center text-zinc-400">Loading song...</div>;
   if (error) return <div className="p-8 text-center text-white">Error loading song</div>;
@@ -181,6 +172,34 @@ function SongDetail() {
     return line.replace(/\[(.*?)\]/g, '<span class="chord">$1</span>');
   }).join('\n');
 
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex flex-col p-6">
+        <div className="absolute top-6 right-6 z-50">
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="flex items-center justify-center w-12 h-12 bg-white text-black rounded-lg hover:bg-zinc-200 transition-all font-bold"
+            title="Exit Fullscreen"
+          >
+            <X size={24} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto pt-12">
+          <div
+            className="chord-sheet"
+            style={{ fontSize: `${fontSize}px` }}
+          >
+            <pre
+              className="bg-transparent border-none p-0 overflow-visible leading-[1.1]"
+              style={{ fontSize: 'inherit', fontFamily: 'inherit', color: 'inherit' }}
+              dangerouslySetInnerHTML={{ __html: highlighted }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
       {/* Sidebar Navigator */}
@@ -288,17 +307,14 @@ function SongDetail() {
           </div>
         </header>
 
-        <section 
-          className={isFullscreen ? 'fixed inset-0 z-50 bg-black p-4 md:p-8 overflow-x-auto' : 'bg-black/50 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-x-auto relative cursor-pointer hover:border-zinc-700 transition-colors'}
-          onClick={() => !isFullscreen && setIsFullscreen(true)}
-        >
-          <div className="absolute top-4 right-4 z-50 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <section className="bg-black/50 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-x-auto relative">
+          <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
             <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
+              onClick={() => setIsFullscreen(true)}
               className="flex items-center justify-center w-10 h-10 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg border border-zinc-800 hover:border-zinc-700 transition-all"
               title="Toggle Fullscreen"
             >
-              {isFullscreen ? <X size={18} /> : <Maximize2 size={18} />}
+              <Maximize2 size={18} />
             </button>
           </div>
           <div
