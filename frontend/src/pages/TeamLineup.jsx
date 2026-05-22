@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
   Mail, Check, X, UserPlus, Clock, Users, Shield, 
-  Music, Mic, Star, Headphones, Monitor, Trash2, Send
+  Music, Mic, Star, Headphones, Monitor, Trash2, Send, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';

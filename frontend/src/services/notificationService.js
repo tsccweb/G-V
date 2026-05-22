@@ -12,7 +12,7 @@ export const getNotifications = async () => {
 
 export const getUnreadCount = async () => {
   const token = localStorage.getItem('token');
-  const response = await axios.get(`${API_URL}/notifications/unread-count`, {
+  const response = await axios.get(`${API_URL}/notifications/count`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return response.data;

@@ -6,6 +6,7 @@ import { Play, Settings, Plus, LayoutList, Music, Radio, Users, Calendar, Lock, 
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { importSongFromUrl, searchOnline } from '../services/importService';
+import NotificationTray from '../components/NotificationTray';
 
 function Dashboard() {
   const { user, theme, toggleTheme } = useAuthStore();
@@ -124,6 +125,7 @@ function Dashboard() {
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">{'G>/\\V'}</h1>
           </div>
         </div>
+        <NotificationTray />
       </header>
 
       {/* Hero Action */}

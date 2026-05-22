@@ -3,7 +3,7 @@ const prisma = require('../utils/prisma');
 // Get combined unread count
 exports.getUnreadCount = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const userRole = req.user.role;
 
     // 1. General Notifications
@@ -41,7 +41,7 @@ exports.getUnreadCount = async (req, res) => {
 // Get all notifications for a user
 exports.getNotifications = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const notifications = await prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -58,7 +58,7 @@ exports.markAsRead = async (req, res) => {
   const { id } = req.params;
   try {
     await prisma.notification.update({
-      where: { id, userId: req.user.id },
+      where: { id, userId: req.user.userId },
       data: { isRead: true }
     });
     res.json({ message: 'Notification marked as read' });
@@ -71,7 +71,7 @@ exports.markAsRead = async (req, res) => {
 exports.markAllAsRead = async (req, res) => {
   try {
     await prisma.notification.updateMany({
-      where: { userId: req.user.id, isRead: false },
+      where: { userId: req.user.userId, isRead: false },
       data: { isRead: true }
     });
     res.json({ message: 'All notifications marked as read' });
