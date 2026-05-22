@@ -115,6 +115,7 @@ model ServiceItem {
   order      Int
   songId     String?
   song       Song?    @relation(fields: [songId], references: [id])
+  key        String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -147,6 +148,7 @@ model WorshipFlowSong {
   assignedOrganist    String?
   assignedDrummer     String?
   assignedVocalists   String[]
+  key                 String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }

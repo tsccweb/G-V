@@ -22,7 +22,10 @@ const TEXT_COLORS = ['#FFFFFF', '#B0BEC5', '#FFC107', '#69F0AE', '#D1C4E9', '#00
 /* ── Accordion button ── */
 function AccordionBtn({ icon: Icon, label, isOpen, onClick, description }) {
   return (
-    <button onClick={onClick}
+    <motion.button 
+      onClick={onClick}
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
       className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all ${isOpen ? 'bg-zinc-800/60 border-zinc-700' : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700'
         }`}>
       <div className="flex items-center gap-3">
@@ -35,7 +38,7 @@ function AccordionBtn({ icon: Icon, label, isOpen, onClick, description }) {
         </div>
       </div>
       <ChevronRight size={16} className={`text-zinc-500 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
-    </button>
+    </motion.button>
   );
 }
 
@@ -44,8 +47,12 @@ function ColorRow({ colors, active, onChange, settingKey }) {
   return (
     <div className="flex flex-wrap gap-3">
       {colors.map(c => (
-        <button key={c} onClick={() => onChange(settingKey, c)}
-          className={`w-10 h-10 rounded-full border-2 transition-all ${active === c ? 'border-white scale-110 ring-2 ring-white/20' : 'border-zinc-800 hover:scale-105'
+        <motion.button 
+          key={c} 
+          onClick={() => onChange(settingKey, c)}
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          className={`w-10 h-10 rounded-full border-2 transition-all ${active === c ? 'border-white scale-110 ring-2 ring-white/20' : 'border-zinc-800'
             }`} style={{ backgroundColor: c }} />
       ))}
       <div className="relative">
@@ -87,7 +94,8 @@ export default function SettingsPage() {
   });
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
   const [pwMsg, setPwMsg] = useState(null);
-  const [showPw, setShowPw] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
   const [saveMsg, setSaveMsg] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -138,6 +146,8 @@ export default function SettingsPage() {
       await changePassword({ currentPassword: pw.current, newPassword: pw.next });
       setPwMsg({ ok: true, t: 'Password updated ✓' });
       setPw({ current: '', next: '', confirm: '' });
+      setShowCurrentPw(false);
+      setShowNewPw(false);
     } catch (e) {
       setPwMsg({ ok: false, t: e.response?.data?.error || 'Failed' });
     }
@@ -151,9 +161,6 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between sticky top-0 z-50 bg-black/90 backdrop-blur-lg py-4 -mx-5 px-5">
         <h1 className="text-lg font-bold text-white">Settings</h1>
-        <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors">
-          <X size={20} />
-        </button>
       </div>
 
       {/* Live Preview */}
@@ -172,58 +179,82 @@ export default function SettingsPage() {
         <div>
           <AccordionBtn icon={Paintbrush} label="Customize Display" description="Font, background & text color"
             isOpen={openSection === 'display'} onClick={() => toggle('display')} />
-          {openSection === 'display' && (
-            <div className="mt-2 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl space-y-8 animate-in slide-in-from-top-2 duration-200">
-              {/* Font */}
-              <div>
-                <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3">Font</p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {FONTS.map(f => (
-                    <button key={f.id} onClick={() => set('fontFamily', f.id)}
-                      className={`p-4 rounded-xl border text-left transition-all ${ls.fontFamily === f.id
-                          ? 'border-white bg-zinc-800/80 text-white'
-                          : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:border-zinc-700'
-                        }`}>
-                      <p className="text-[8px] font-black tracking-[0.2em] opacity-50 mb-1">{f.label}</p>
-                      <p className="text-sm font-semibold truncate" style={{ fontFamily: f.family }}>Worthy of every song</p>
-                    </button>
-                  ))}
+          <AnimatePresence>
+            {openSection === 'display' && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl space-y-8">
+                  {/* Font */}
+                  <div>
+                    <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3">Font</p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {FONTS.map(f => (
+                        <motion.button 
+                          key={f.id} 
+                          onClick={() => set('fontFamily', f.id)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`p-4 rounded-xl border text-left transition-all ${ls.fontFamily === f.id
+                              ? 'border-white bg-zinc-800/80 text-white'
+                              : 'border-zinc-800 bg-zinc-900/60 text-zinc-500 hover:border-zinc-700'
+                            }`}>
+                          <p className="text-[8px] font-black tracking-[0.2em] opacity-50 mb-1">{f.label}</p>
+                          <p className="text-sm font-semibold truncate" style={{ fontFamily: f.family }}>Worthy of every song</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Background */}
+                  <div>
+                    <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3">Background</p>
+                    <ColorRow colors={BG_COLORS} active={ls.bgColor} onChange={set} settingKey="bgColor" />
+                  </div>
+                  {/* Text Color */}
+                  <div>
+                    <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3">Text Color</p>
+                    <ColorRow colors={TEXT_COLORS} active={ls.textColor} onChange={set} settingKey="textColor" />
+                  </div>
+                  <button onClick={() => resetMut.mutate()}
+                    className="text-[10px] font-bold text-zinc-600 hover:text-zinc-300 uppercase tracking-widest transition-colors">
+                    Reset to defaults
+                  </button>
                 </div>
-              </div>
-              {/* Background */}
-              <div>
-                <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3">Background</p>
-                <ColorRow colors={BG_COLORS} active={ls.bgColor} onChange={set} settingKey="bgColor" />
-              </div>
-              {/* Text Color */}
-              <div>
-                <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-3">Text Color</p>
-                <ColorRow colors={TEXT_COLORS} active={ls.textColor} onChange={set} settingKey="textColor" />
-              </div>
-              <button onClick={() => resetMut.mutate()}
-                className="text-[10px] font-bold text-zinc-600 hover:text-zinc-300 uppercase tracking-widest transition-colors">
-                Reset to defaults
-              </button>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* 2. Edit Profile */}
         <div>
           <AccordionBtn icon={User} label="Edit Profile" description="Name & phone number"
             isOpen={openSection === 'profile'} onClick={() => toggle('profile')} />
-          {openSection === 'profile' && (
-            <div className="mt-2 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl space-y-3 animate-in slide-in-from-top-2 duration-200">
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="First Name" value={profile.firstName}
-                  onChange={e => setProfile(p => ({ ...p, firstName: e.target.value }))} />
-                <Field label="Last Name" value={profile.lastName}
-                  onChange={e => setProfile(p => ({ ...p, lastName: e.target.value }))} />
-              </div>
-              <Field label="Phone" type="tel" value={profile.phone}
-                onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} />
-            </div>
-          )}
+          <AnimatePresence>
+            {openSection === 'profile' && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="First Name" value={profile.firstName}
+                      onChange={e => setProfile(p => ({ ...p, firstName: e.target.value }))} />
+                    <Field label="Last Name" value={profile.lastName}
+                      onChange={e => setProfile(p => ({ ...p, lastName: e.target.value }))} />
+                  </div>
+                  <Field label="Phone" type="tel" value={profile.phone}
+                    onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* 3. Change Password - Hidden for Google Users */}
@@ -231,33 +262,55 @@ export default function SettingsPage() {
           <div>
             <AccordionBtn icon={KeyRound} label="Change Password" description="Update your login credentials"
               isOpen={openSection === 'password'} onClick={() => toggle('password')} />
-            {openSection === 'password' && (
-              <div className="mt-2 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl space-y-3 animate-in slide-in-from-top-2 duration-200">
-                {pwMsg && (
-                  <div className={`px-4 py-2.5 rounded-xl text-xs font-bold ${pwMsg.ok ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                    }`}>{pwMsg.t}</div>
-                )}
-                <div className="relative">
-                  <Field label="Current Password" type={showPw ? 'text' : 'password'} value={pw.current}
-                    onChange={e => setPw(p => ({ ...p, current: e.target.value }))} />
-                  <button type="button" onClick={() => setShowPw(!showPw)}
-                    className="absolute right-3 bottom-2.5 text-zinc-600 hover:text-zinc-400">
-                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="New Password" type={showPw ? 'text' : 'password'} value={pw.next}
-                    onChange={e => setPw(p => ({ ...p, next: e.target.value }))} />
-                  <Field label="Confirm" type={showPw ? 'text' : 'password'} value={pw.confirm}
-                    onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))} />
-                </div>
-                <button onClick={handlePwChange} disabled={!pw.current || !pw.next}
-                  className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-25 disabled:cursor-not-allowed">
-                  Update Password
-                </button>
-              </div>
-            )}
+            <AnimatePresence>
+              {openSection === 'password' && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-2 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl space-y-3">
+                    {pwMsg && (
+                      <div className={`px-4 py-2.5 rounded-xl text-xs font-bold ${pwMsg.ok ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                        }`}>{pwMsg.t}</div>
+                    )}
+                    <div className="relative">
+                      <Field label="Current Password" type={showCurrentPw ? 'text' : 'password'} value={pw.current}
+                        onChange={e => setPw(p => ({ ...p, current: e.target.value }))} />
+                      <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)}
+                        className="absolute right-3 bottom-2.5 text-zinc-600 hover:text-zinc-400">
+                        {showCurrentPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="relative">
+                        <Field label="New Password" type={showNewPw ? 'text' : 'password'} value={pw.next}
+                          onChange={e => setPw(p => ({ ...p, next: e.target.value }))} />
+                        <button type="button" onClick={() => setShowNewPw(!showNewPw)}
+                          className="absolute right-3 bottom-2.5 text-zinc-600 hover:text-zinc-400">
+                          {showNewPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Field label="Confirm" type={showNewPw ? 'text' : 'password'} value={pw.confirm}
+                          onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))} />
+                        <button type="button" onClick={() => setShowNewPw(!showNewPw)}
+                          className="absolute right-3 bottom-2.5 text-zinc-600 hover:text-zinc-400">
+                          {showNewPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
+                    </div>
+                    <button onClick={handlePwChange} disabled={!pw.current || !pw.next}
+                      className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-25 disabled:cursor-not-allowed">
+                      Update Password
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>
@@ -276,7 +329,7 @@ export default function SettingsPage() {
           </div>
           <button onClick={() => navigate('/pricing')}
             className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
-            {pendingReq ? 'Check Status' : 'Upgrade Plan'}
+            {pendingReq ? 'Check Status' : (user?.plan === 'FREE' ? 'Upgrade Plan' : 'Show Plan')}
           </button>
         </div>
         <div className="flex items-center justify-between pt-4">

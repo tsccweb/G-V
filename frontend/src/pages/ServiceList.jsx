@@ -1,14 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getServices, deleteService } from '../services/serviceService';
-import { Calendar, Plus, Users, ChevronRight, Trash2, Clock, Music, Sparkles } from 'lucide-react';
+import { Calendar, Plus, Users, ChevronRight, Trash2, Clock, Music, Sparkles, MoreVertical } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 
 function ServiceList() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   const { data: services, isLoading, error } = useQuery({
     queryKey: ['services'],
@@ -96,17 +98,54 @@ function ServiceList() {
           </div>
         </Link>
 
-        {/* Delete button (owner only) */}
+        {/* Options Menu (owner only) */}
         {isOwner && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              setDeletingId(service.id);
-            }}
-            className="absolute -top-2 -right-2 p-1.5 bg-zinc-900 border border-zinc-700 rounded-full text-zinc-500 hover:text-red-400 hover:border-red-400/50 transition-all opacity-0 group-hover:opacity-100 z-10"
-          >
-            <Trash2 size={12} />
-          </button>
+          <div className="absolute top-2 right-2 z-10">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setOpenMenuId(openMenuId === service.id ? null : service.id);
+              }}
+              className="p-1.5 bg-zinc-900/80 backdrop-blur-md border border-zinc-800 rounded-lg text-zinc-500 hover:text-white transition-all"
+            >
+              <MoreVertical size={16} />
+            </button>
+
+            <AnimatePresence>
+              {openMenuId === service.id && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-[60]" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOpenMenuId(null);
+                    }}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    className="absolute right-0 top-10 w-32 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[70] overflow-hidden"
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDeletingId(service.id);
+                        setOpenMenuId(null);
+                      }}
+                      className="w-full px-4 py-3 text-left text-xs font-bold text-red-400 hover:bg-red-400/10 flex items-center gap-2 transition-colors"
+                    >
+                      <Trash2 size={12} />
+                      Delete
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         )}
       </div>
     );

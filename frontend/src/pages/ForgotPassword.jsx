@@ -13,6 +13,7 @@ export default function ForgotPassword() {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState(null);
 
   const handleSendOTP = async (e) => {
@@ -180,25 +181,39 @@ export default function ForgotPassword() {
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">New Password</label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-5 py-4 bg-black border border-zinc-800 rounded-2xl text-sm transition-all focus:border-zinc-500 outline-none"
-                      placeholder="••••••••"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full px-5 py-4 bg-black border border-zinc-800 rounded-2xl text-sm focus:outline-none focus:border-zinc-500 transition-all outline-none"
+                        placeholder="••••••••"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Confirm New Password</label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-5 py-4 bg-black border border-zinc-800 rounded-2xl text-sm transition-all focus:border-zinc-500 outline-none"
-                      placeholder="••••••••"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-5 py-4 bg-black border border-zinc-800 rounded-2xl text-sm focus:outline-none focus:border-zinc-500 transition-all outline-none"
+                        placeholder="••••••••"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <button
                     disabled={forgotLoading}

@@ -139,6 +139,32 @@ function LiveWorshipMode() {
   }, [currentItem]);
 
   const activeSlide = slides[currentSlideIndex];
+  
+  // Calculate initial transposition when song changes
+  useEffect(() => {
+    if (currentItem?.type === 'SONG' && currentItem.key && currentItem.song?.key) {
+      const keys = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+      const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+      
+      const getNormKey = (k) => {
+        if (!k) return 'C';
+        let nk = k.split(' ')[0]; // Remove extra info like ' (Original)'
+        if (nk.endsWith('b')) nk = flatMap[nk] || nk;
+        return nk;
+      };
+
+      const fromIdx = keys.indexOf(getNormKey(currentItem.song.key));
+      const toIdx = keys.indexOf(getNormKey(currentItem.key));
+      
+      if (fromIdx !== -1 && toIdx !== -1) {
+        let diff = (toIdx - fromIdx) % 12;
+        while (diff < 0) diff += 12;
+        setTranspose(diff);
+      }
+    } else {
+      setTranspose(0);
+    }
+  }, [currentIndex, currentItem]);
 
   // Section Jump Buttons (Unique sections in current song)
   const sections = useMemo(() => {
@@ -281,12 +307,19 @@ function LiveWorshipMode() {
       </div>
       <h2 className="text-3xl font-black text-white uppercase tracking-tight">Session Ended</h2>
       <p className="text-zinc-500 max-w-xs text-sm leading-relaxed">This worship session is no longer active or the invitation has expired.</p>
-      <Link to="/" className="px-8 py-4 bg-white text-black font-black rounded-2xl hover:bg-zinc-200 transition-all uppercase tracking-widest text-xs">Return Dashboard</Link>
+      <Link to="/" className="px-8 py-4 bg-white text-black font-black rounded-2xl hover:bg-zinc-200 transition-all uppercase tracking-widest text-xs">Return Home</Link>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 bg-black text-white flex flex-col font-sans overflow-hidden select-none">
+    <div 
+      className="fixed inset-0 flex flex-col overflow-hidden select-none"
+      style={{ 
+        backgroundColor: settings?.bgColor || '#000000', 
+        color: settings?.textColor || '#ffffff',
+        fontFamily: settings?.fontFamily || 'sans-serif'
+      }}
+    >
       {/* Top HUD — Minimal */}
       <div className="px-3 py-2 md:px-6 md:py-4 flex items-center justify-between border-b border-white/[0.05] bg-black/50 backdrop-blur-3xl z-50">
         <div className="flex items-center gap-3 md:gap-6 min-w-0">
@@ -361,11 +394,11 @@ function LiveWorshipMode() {
                   </span>
                   <div className="h-px bg-zinc-900 w-full" />
                 </div>
-                <div style={{ fontSize: `${localFontSize}px` }} className="leading-tight">
+                <div style={{ fontSize: `${localFontSize}px`, fontFamily: settings?.fontFamily || 'inherit' }} className="leading-tight">
                   {viewType === 'musician' || viewType === 'leader' ? (
-                    <ChordSheetRenderer lyrics={slide.raw} transpose={transpose} fontSize={localFontSize} />
+                    <ChordSheetRenderer lyrics={slide.raw} transpose={transpose} fontSize={localFontSize} settings={settings} />
                   ) : (
-                    <div className="text-zinc-300 font-bold tracking-tight whitespace-pre-line leading-relaxed">
+                    <div className="font-bold tracking-tight whitespace-pre-line leading-relaxed" style={{ color: settings?.textColor || 'inherit' }}>
                       {slide.content.replace(/\[.*?\]/g, '')}
                     </div>
                   )}
@@ -620,7 +653,7 @@ function LiveWorshipMode() {
 }
 
 // Sub-component for rendering lines with chords natively using ChordSheetJS
-function ChordSheetRenderer({ lyrics: rawLyrics, transpose, fontSize, isSlide }) {
+function ChordSheetRenderer({ lyrics: rawLyrics, transpose, fontSize, isSlide, settings }) {
   const renderedHtml = useMemo(() => {
     try {
       const isAlreadyChordPro = rawLyrics.includes('[') && rawLyrics.includes(']');
@@ -650,8 +683,8 @@ function ChordSheetRenderer({ lyrics: rawLyrics, transpose, fontSize, isSlide })
       className={`chord-renderer ${isSlide ? 'is-presentation' : ''}`}
       style={{
         fontSize: isSlide ? 'inherit' : `${fontSize}px`,
-        fontFamily: 'inherit',
-        color: 'inherit'
+        fontFamily: settings?.fontFamily || 'inherit',
+        color: settings?.textColor || 'inherit'
       }}
       dangerouslySetInnerHTML={{ __html: renderedHtml }}
     />

@@ -133,9 +133,16 @@ function Register() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Confirm Password *</label>
-                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
-                  className="w-full px-5 py-4 bg-black border border-zinc-800 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-white/5 focus:border-zinc-500 transition-all placeholder:text-zinc-700"
-                  required minLength={6} />
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
+                    className="w-full px-5 py-4 bg-black border border-zinc-800 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-white/5 focus:border-zinc-500 transition-all placeholder:text-zinc-700"
+                    required minLength={6} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
             </div>
 

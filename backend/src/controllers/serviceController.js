@@ -23,7 +23,8 @@ exports.createService = async (req, res) => {
             assignedTo: item.assignedTo,
             notes: item.notes,
             duration: parseInt(item.duration) || 0,
-            order: index
+            order: index,
+            key: item.key
           }))
         }
       },
@@ -45,7 +46,10 @@ exports.getServices = async (req, res) => {
           { lineup: { some: { userId: req.user.userId } } }
         ]
       },
-      include: { lineup: true },
+      include: { 
+        lineup: { include: { user: { select: { firstName: true, lastName: true, role: true } } } },
+        createdBy: { select: { firstName: true, lastName: true } }
+      },
       orderBy: { date: 'asc' }
     });
     res.json(services);
@@ -136,7 +140,7 @@ exports.updateServiceItems = async (req, res) => {
 // Add Service Item
 exports.addServiceItem = async (req, res) => {
   const { serviceId } = req.params;
-  const { title, type, assignedTo, notes, duration, order, songId } = req.body;
+  const { title, type, assignedTo, notes, duration, order, songId, key } = req.body;
   try {
     // Verify service ownership
     const service = await prisma.service.findFirst({
@@ -153,7 +157,8 @@ exports.addServiceItem = async (req, res) => {
         notes,
         duration: duration || 0,
         order: order || 99,
-        songId
+        songId,
+        key
       },
       include: { song: true }
     });

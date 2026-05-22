@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   getAllUsers, 
   updateUser, 
@@ -78,7 +79,7 @@ export default function AdminDashboard() {
   const pendingRequests = requests?.filter(r => r.status === 'PENDING');
   const processedRequests = requests?.filter(r => r.status !== 'PENDING');
 
-  if (usersLoading || requestsLoading) return <div className="p-8 text-center text-zinc-500">Loading Admin Dashboard...</div>;
+  if (usersLoading || requestsLoading) return <div className="p-8 text-center text-zinc-500">Loading Admin Control...</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 pb-32">
@@ -89,15 +90,19 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setActiveTab('users')}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
               activeTab === 'users' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
             }`}
           >
             <Users size={16} /> Users
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setActiveTab('requests')}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
               activeTab === 'requests' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
@@ -110,7 +115,7 @@ export default function AdminDashboard() {
                 {pendingRequests.length}
               </span>
             )}
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -129,18 +134,30 @@ export default function AdminDashboard() {
           </div>
 
           {/* Users Table/Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredUsers?.map(u => (
-              <UserCard 
-                key={u.id} 
-                user={u} 
-                onUpdate={(data) => updateMutation.mutate({ id: u.id, data })}
-                onDelete={() => {
-                  if (window.confirm(`Delete user ${u.email}?`)) deleteMutation.mutate(u.id);
-                }}
-              />
-            ))}
-          </div>
+          <motion.div 
+            layout
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredUsers?.map(u => (
+                <motion.div
+                  key={u.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                >
+                  <UserCard 
+                    user={u} 
+                    onUpdate={(data) => updateMutation.mutate({ id: u.id, data })}
+                    onDelete={() => {
+                      if (window.confirm(`Delete user ${u.email}?`)) deleteMutation.mutate(u.id);
+                    }}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         </div>
       ) : (
         <div className="space-y-8">

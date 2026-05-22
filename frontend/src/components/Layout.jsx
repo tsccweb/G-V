@@ -18,7 +18,7 @@ function Layout({ children }) {
   };
 
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Home', path: '/', icon: LayoutDashboard },
     { name: 'Songs', path: '/songs', icon: Music },
     { name: 'Services', path: '/services', icon: Calendar, isPremium: true },
     { name: 'Team', path: '/team', icon: Users, isPremium: true },
@@ -41,20 +41,25 @@ function Layout({ children }) {
             const isLocked = item.isPremium && user?.plan === 'FREE';
 
             return (
-              <Link
+              <motion.div
                 key={item.name}
-                to={isLocked ? '/pricing' : item.path}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all group ${isActive
-                    ? 'bg-white text-black shadow-lg shadow-white/5'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-                  } ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <div className="flex items-center gap-3">
-                  <Icon size={20} />
-                  <span className="font-medium">{item.name}</span>
-                </div>
-                {isLocked && <Lock size={14} className="text-zinc-500 group-hover:text-emerald-400 transition-colors" />}
-              </Link>
+                <Link
+                  to={isLocked ? '/pricing' : item.path}
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all group ${isActive
+                      ? 'bg-white text-black shadow-lg shadow-white/5'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    } ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon size={20} />
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  {isLocked && <Lock size={14} className="text-zinc-500 group-hover:text-emerald-400 transition-colors" />}
+                </Link>
+              </motion.div>
             );
           })}
         </nav>
@@ -93,7 +98,18 @@ function Layout({ children }) {
         {/* Desktop Header/Padding could go here if needed, but keeping it clean */}
 
         <main className="flex-1 overflow-y-auto w-full pb-20 md:pb-0">
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="h-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         {/* Mobile Bottom Navigation - Visible on phones AND tablets when sidebar is hidden */}
@@ -105,22 +121,27 @@ function Layout({ children }) {
               const isLocked = item.isPremium && user?.plan === 'FREE';
 
               return (
-                <Link
-                  key={item.name}
-                  to={isLocked ? '/pricing' : item.path}
-                  className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
-                    } ${isLocked ? 'opacity-40' : ''}`}
+                <motion.div 
+                  key={item.name} 
+                  className="w-full"
+                  whileTap={{ scale: 0.9 }}
                 >
-                  <div className="relative">
-                    <Icon size={isActive ? 22 : 20} className={isActive ? 'animate-in zoom-in duration-200' : ''} />
-                    {isLocked && (
-                      <div className="absolute -top-1 -right-1 bg-black rounded-full p-0.5">
-                        <Lock size={8} className="text-zinc-500" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-[10px] font-bold">{item.name}</span>
-                </Link>
+                  <Link
+                    to={isLocked ? '/pricing' : item.path}
+                    className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                      } ${isLocked ? 'opacity-40' : ''}`}
+                  >
+                    <div className="relative">
+                      <Icon size={isActive ? 22 : 20} className={isActive ? 'animate-in zoom-in duration-200' : ''} />
+                      {isLocked && (
+                        <div className="absolute -top-1 -right-1 bg-black rounded-full p-0.5">
+                          <Lock size={8} className="text-zinc-500" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold">{item.name}</span>
+                  </Link>
+                </motion.div>
               );
             })}
           </div>

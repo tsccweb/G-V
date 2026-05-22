@@ -14,8 +14,9 @@ import { getSongs } from '../services/songService';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
   Info, GripVertical, Check, X, Trash2, Search, AlertTriangle,
-  ChevronLeft, Plus, Music, MessageSquare, BookOpen, Users
+  ChevronLeft, Plus, Music, MessageSquare, BookOpen, Users, Send, MoreVertical
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
@@ -37,7 +38,10 @@ function ServicePlanner() {
   const [selectedRole, setSelectedRole] = useState('Vocalist');
   const [isSongModalOpen, setIsSongModalOpen] = useState(false);
   const [songSearchQuery, setSongSearchQuery] = useState('');
+  const [selectedSongForFlow, setSelectedSongForFlow] = useState(null);
+  const [selectedKey, setSelectedKey] = useState('');
   const [memberToRemove, setMemberToRemove] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   const { data: songsData } = useQuery({
     queryKey: ['songs'],
@@ -99,15 +103,18 @@ function ServicePlanner() {
     }
   });
 
-  const handleAddItem = (song) => {
+  const handleAddItem = (song, key) => {
     addItemMutation.mutate({
       title: song.title,
       type: 'SONG',
       duration: 5,
       order: items.length,
-      songId: song.id // Link to the actual song record
+      songId: song.id,
+      key: key || song.key
     });
     setIsSongModalOpen(false);
+    setSelectedSongForFlow(null);
+    setSelectedKey('');
     setSongSearchQuery('');
   };
 
@@ -231,7 +238,14 @@ function ServicePlanner() {
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-white truncate">{item.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-white truncate">{item.title}</h4>
+                              {item.key && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-md border border-zinc-700 font-mono">
+                                  {item.key}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-zinc-500 truncate">
                               {item.assignedTo ? `Assigned to: ${item.assignedTo}` : 'No one assigned'}
                             </p>
@@ -240,13 +254,45 @@ function ServicePlanner() {
                           <div className="text-right flex items-center gap-4">
                             <span className="text-sm font-mono text-zinc-500">{item.duration}m</span>
                             {user?.id === service?.userId && (
-                              <button
-                                onClick={() => handleRemoveItem(item.id)}
-                                disabled={removeItemMutation.isPending}
-                                className="p-2 text-zinc-600 hover:text-red-400 transition-all rounded-lg hover:bg-red-400/10"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                              <div className="relative">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(openMenuId === item.id ? null : item.id);
+                                  }}
+                                  className="p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                                >
+                                  <MoreVertical size={16} />
+                                </button>
+
+                                <AnimatePresence>
+                                  {openMenuId === item.id && (
+                                    <>
+                                      <div 
+                                        className="fixed inset-0 z-[60]" 
+                                        onClick={() => setOpenMenuId(null)}
+                                      />
+                                      <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, x: 10 }}
+                                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, x: 10 }}
+                                        className="absolute right-0 top-10 w-32 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[70] overflow-hidden"
+                                      >
+                                        <button
+                                          onClick={() => {
+                                            removeItemMutation.mutate(item.id);
+                                            setOpenMenuId(null);
+                                          }}
+                                          className="w-full px-4 py-3 text-left text-xs font-bold text-red-400 hover:bg-red-400/10 flex items-center gap-2 transition-colors"
+                                        >
+                                          <Trash2 size={12} />
+                                          Delete
+                                        </button>
+                                      </motion.div>
+                                    </>
+                                  )}
+                                </AnimatePresence>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -346,49 +392,107 @@ function ServicePlanner() {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-zinc-900 border border-zinc-800 rounded-[2rem] w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
             <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Select a Song</h2>
-              <button onClick={() => setIsSongModalOpen(false)} className="text-zinc-500 hover:text-white p-2">
+              <h2 className="text-2xl font-bold text-white">
+                {selectedSongForFlow ? 'Select Key' : 'Select a Song'}
+              </h2>
+              <button 
+                onClick={() => {
+                  setIsSongModalOpen(false);
+                  setSelectedSongForFlow(null);
+                }} 
+                className="text-zinc-500 hover:text-white p-2"
+              >
                 <X size={24} />
               </button>
             </div>
 
-            <div className="p-6 border-b border-zinc-800">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search your library..."
-                  value={songSearchQuery}
-                  onChange={(e) => setSongSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-black border border-zinc-700 rounded-xl focus:ring-2 focus:ring-white focus:outline-none transition-all text-white"
-                />
-              </div>
-            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {!selectedSongForFlow ? (
+                <div className="space-y-2">
+                  <div className="mb-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+                      <input
+                        type="text"
+                        placeholder="Search your library..."
+                        value={songSearchQuery}
+                        onChange={(e) => setSongSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-black border border-zinc-700 rounded-xl focus:ring-2 focus:ring-white focus:outline-none transition-all text-white"
+                      />
+                    </div>
+                  </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {songsData
-                ?.filter(s => s.title.toLowerCase().includes(songSearchQuery.toLowerCase()) || s.artist?.toLowerCase().includes(songSearchQuery.toLowerCase()))
-                .map(song => (
-                  <button
-                    key={song.id}
-                    onClick={() => handleAddItem(song)}
-                    className="w-full text-left p-4 bg-black border border-zinc-800 rounded-xl hover:border-zinc-600 hover:bg-zinc-800/50 transition-all flex items-center gap-4 group"
-                  >
-                    <div className="p-3 bg-zinc-900 rounded-lg group-hover:bg-zinc-700 transition-colors">
-                      <Music size={20} className="text-zinc-400 group-hover:text-white" />
-    </div>
+                  {songsData
+                    ?.filter(s => s.title.toLowerCase().includes(songSearchQuery.toLowerCase()) || s.artist?.toLowerCase().includes(songSearchQuery.toLowerCase()))
+                    .map(song => (
+                      <button
+                        key={song.id}
+                        onClick={() => {
+                          setSelectedSongForFlow(song);
+                          setSelectedKey(song.key || 'C');
+                        }}
+                        className="w-full text-left p-4 bg-black border border-zinc-800 rounded-xl hover:border-zinc-600 hover:bg-zinc-800/50 transition-all flex items-center gap-4 group"
+                      >
+                        <div className="p-3 bg-zinc-900 rounded-lg group-hover:bg-zinc-700 transition-colors">
+                          <Music size={20} className="text-zinc-400 group-hover:text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-white text-lg">{song.title}</h4>
+                          <p className="text-sm text-zinc-500">{song.artist || 'Unknown Artist'}</p>
+                        </div>
+                        <div className="ml-auto">
+                          <span className="text-xs font-bold px-2 py-1 bg-zinc-900 rounded-md text-zinc-400 border border-zinc-800">
+                            {song.key || '?'}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              ) : (
+                <div className="space-y-8 p-4">
+                  <div className="flex items-center gap-4 p-4 bg-black border border-zinc-800 rounded-2xl">
+                    <div className="p-3 bg-zinc-800 rounded-xl">
+                      <Music size={24} className="text-white" />
+                    </div>
                     <div>
-                      <h4 className="font-bold text-white text-lg">{song.title}</h4>
-                      <p className="text-sm text-zinc-500">{song.artist || 'Unknown Artist'}</p>
+                      <h3 className="text-xl font-bold text-white">{selectedSongForFlow.title}</h3>
+                      <p className="text-zinc-500 text-sm">Original Key: {selectedSongForFlow.key || 'None'}</p>
                     </div>
-                    <div className="ml-auto">
-                      <span className="text-xs font-bold px-2 py-1 bg-zinc-900 rounded-md text-zinc-400 border border-zinc-800">
-                        {song.key || '?'}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              {(!songsData || songsData.length === 0) && (
+                  </div>
+
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'].map(k => (
+                      <button
+                        key={k}
+                        onClick={() => setSelectedKey(k)}
+                        className={`py-3 rounded-xl border font-bold transition-all ${
+                          selectedKey === k 
+                            ? 'bg-white text-black border-white shadow-lg shadow-white/10 scale-105' 
+                            : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'
+                        }`}
+                      >
+                        {k}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => setSelectedSongForFlow(null)}
+                      className="flex-1 py-4 bg-zinc-800 text-white font-bold rounded-2xl hover:bg-zinc-700 transition-all"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={() => handleAddItem(selectedSongForFlow, selectedKey)}
+                      className="flex-[2] py-4 bg-white text-black font-black rounded-2xl hover:bg-zinc-200 transition-all shadow-xl shadow-white/5"
+                    >
+                      Add to Flow
+                    </button>
+                  </div>
+                </div>
+              )}
+              {(!songsData || songsData.length === 0) && !selectedSongForFlow && (
                 <div className="text-center p-8 text-zinc-500">Your library is empty. Add songs from the Song Library first!</div>
               )}
             </div>

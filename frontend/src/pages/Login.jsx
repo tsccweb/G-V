@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleLogin } from '@react-oauth/google';
-import { Mail, Lock, ArrowRight, Github, Chrome, LogIn, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Github, Chrome, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login, googleLogin, isLoading, error } = useAuthStore();
   const navigate = useNavigate();
 
@@ -91,20 +92,29 @@ function Login() {
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-white transition-colors" size={18} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-black border border-zinc-800 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-white/5 focus:border-zinc-500 transition-all placeholder:text-zinc-700"
+                  className="w-full pl-12 pr-12 py-4 bg-black border border-zinc-800 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-white/5 focus:border-zinc-500 transition-all placeholder:text-zinc-700"
                   placeholder="••••••••"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
-            <button
+            <motion.button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-white text-black font-black rounded-2xl hover:bg-zinc-200 shadow-xl shadow-white/5 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 group mt-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full py-4 bg-white text-black font-black rounded-2xl hover:bg-zinc-200 shadow-xl shadow-white/5 transition-all disabled:opacity-50 flex items-center justify-center gap-2 group mt-2"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
@@ -114,7 +124,7 @@ function Login() {
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
-            </button>
+            </motion.button>
           </form>
 
           <div className="relative">
