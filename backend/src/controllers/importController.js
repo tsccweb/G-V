@@ -1,6 +1,14 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const pdf = require('pdf-parse/lib/pdf-parse.js');
+
+// pdf-parse returns a default export function
+let pdf;
+try {
+  const pdfModule = require('pdf-parse');
+  pdf = pdfModule.default || pdfModule;
+} catch (e) {
+  console.error('Failed to load pdf-parse:', e.message);
+}
 
 const BROWSER_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -152,7 +160,19 @@ exports.importPdf = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
   try {
-    const data = await pdf(req.file.buffer);
+    if (!pdf || typeof pdf !== 'function') {
+      console.error('PDF parser not available:', typeof pdf);
+      return res.status(500).json({ error: 'PDF parsing service unavailable. Please try again.' });
+    }
+
+    let data;
+    try {
+      data = await pdf(req.file.buffer);
+    } catch (parseErr) {
+      console.error('PDF parsing failed:', parseErr.message);
+      throw parseErr;
+    }
+
     const text = data.text;
 
     if (!text || text.trim().length === 0) {
@@ -180,7 +200,7 @@ exports.importPdf = async (req, res) => {
 
     res.json(songData);
   } catch (error) {
-    console.error('PDF Import Error:', error.message, error.stack);
+    console.error('PDF Import Error - Full Stack:', error);
     res.status(500).json({ error: 'Failed to parse PDF content. Please ensure it is a valid text-based PDF.', details: error.message });
   }
 };
