@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getServices } from '../services/serviceService';
 import { getSongs, createSong } from '../services/songService';
-import { Play, Settings, Plus, LayoutList, Music, Radio, Users, Calendar, Lock, ArrowRight, Sun, Moon, Wand2, Sparkles, Loader2, CheckCircle2, AlertCircle, Search, ExternalLink } from 'lucide-react';
+import { 
+  Play, Settings, Plus, LayoutList, Music, Radio, Users, Calendar, Lock, 
+  ArrowRight, Sun, Moon, Wand2, Sparkles, Loader2, CheckCircle2, AlertCircle, 
+  Search, ExternalLink, FileUp, FileText 
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
-import { importSongFromUrl, searchOnline } from '../services/importService';
+import { importSongFromUrl, searchOnline, importSongFromPdf } from '../services/importService';
 import NotificationTray from '../components/NotificationTray';
 
 function Dashboard() {
@@ -72,18 +76,17 @@ function Dashboard() {
     }
   };
 
-  const handleMagicImport = async (e) => {
-    e.preventDefault();
-    if (!importUrl) return;
+  const handlePdfImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
     
     setIsImporting(true);
     setImportError(null);
     setImportSuccess(false);
     
     try {
-      const parsedData = await importSongFromUrl(importUrl);
+      const parsedData = await importSongFromPdf(file);
       
-      // Now save it to the library
       const newSong = await createSong({
         title: parsedData.title,
         artist: parsedData.artist,
@@ -94,15 +97,11 @@ function Dashboard() {
       });
       
       setImportSuccess(true);
-      setImportUrl('');
       queryClient.invalidateQueries(['songs']);
-      
-      setTimeout(() => {
-        navigate(`/songs?id=${newSong.id}`);
-      }, 1500);
+      setTimeout(() => navigate(`/songs?id=${newSong.id}`), 1500);
     } catch (error) {
-      console.error('Import failed:', error);
-      setImportError(error.response?.data?.error || 'Failed to import song. Please check the URL.');
+      console.error('PDF Import failed:', error);
+      setImportError(error.response?.data?.error || 'Failed to parse PDF.');
     } finally {
       setIsImporting(false);
     }
@@ -202,10 +201,35 @@ function Dashboard() {
                 {searchResults.slice(0, 6).map((result, idx) => (
                   <button
                     key={idx}
-                    onClick={() => {
-                      setImportUrl(result.url);
+                    onClick={async () => {
+                      const url = result.url;
+                      setImportUrl(url);
                       setSearchResults([]);
                       setSearchQuery('');
+                      
+                      // Auto-trigger import with the URL
+                      setIsImporting(true);
+                      setImportError(null);
+                      setImportSuccess(false);
+                      try {
+                        const parsedData = await importSongFromUrl(url);
+                        const newSong = await createSong({
+                          title: parsedData.title,
+                          artist: parsedData.artist,
+                          lyrics: parsedData.lyrics,
+                          chords: parsedData.chords || '',
+                          key: parsedData.key || 'C',
+                          category: 'Imported'
+                        });
+                        setImportSuccess(true);
+                        setImportUrl('');
+                        queryClient.invalidateQueries(['songs']);
+                        setTimeout(() => navigate(`/songs?id=${newSong.id}`), 1500);
+                      } catch (err) {
+                        setImportError(err.response?.data?.error || 'Failed to import. The site might be blocking us.');
+                      } finally {
+                        setIsImporting(false);
+                      }
                     }}
                     className="w-full flex items-center justify-between p-4 bg-black border border-zinc-900 rounded-2xl hover:border-blue-500/40 hover:bg-zinc-900/50 transition-all text-left"
                   >
@@ -221,57 +245,60 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Card 2: Direct Import */}
+        {/* Card 2: PDF Import */}
         <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] relative overflow-hidden group h-full flex flex-col">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Wand2 size={120} className="text-amber-500" />
+            <FileText size={120} className="text-amber-500" />
           </div>
           <div className="relative z-10 space-y-6 flex-1">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
-                <Wand2 size={24} />
+                <FileUp size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-black uppercase italic tracking-tighter">Magic Import</h3>
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Import via UG or Songsterr URL</p>
+                <h3 className="text-xl font-black uppercase italic tracking-tighter">Smart PDF Import</h3>
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Upload Ultimate Guitar PDF export</p>
               </div>
             </div>
 
-            <form onSubmit={handleMagicImport} className="space-y-4">
-              <input
-                type="text"
-                placeholder="https://tabs.ultimate-guitar.com/..."
-                value={importUrl}
-                onChange={(e) => setImportUrl(e.target.value)}
-                className="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 text-sm font-medium focus:border-amber-500/50 outline-none transition-all placeholder:text-zinc-700"
-                disabled={isImporting}
-              />
-              <button
-                type="submit"
-                disabled={isImporting || !importUrl}
-                className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${
-                  isImporting 
-                    ? 'bg-zinc-800 text-zinc-500' 
-                    : 'bg-white text-black hover:bg-zinc-200 active:scale-95'
-                }`}
-              >
-                {isImporting ? <Loader2 size={18} className="animate-spin" /> : 'Import Now'}
-              </button>
-            </form>
+            <div className="space-y-4">
+              <label className="block">
+                <div className={`w-full border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center gap-3 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all cursor-pointer group/upload ${isImporting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  {isImporting ? (
+                    <Loader2 size={32} className="text-amber-500 animate-spin" />
+                  ) : (
+                    <FileUp size={32} className="text-zinc-700 group-hover/upload:text-amber-500 transition-colors" />
+                  )}
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-zinc-400">
+                      {isImporting ? 'Parsing PDF...' : 'Click to Upload PDF'}
+                    </p>
+                    <p className="text-[10px] text-zinc-600 font-medium mt-1">Select your Ultimate Guitar export file</p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={handlePdfImport}
+                    disabled={isImporting}
+                  />
+                </div>
+              </label>
 
-            {importError && (
-              <div className="flex items-center gap-2 text-red-500 text-[10px] font-bold bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
-                <AlertCircle size={14} className="shrink-0" />
-                {importError}
-              </div>
-            )}
-            
-            {importSuccess && (
-              <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
-                <CheckCircle2 size={14} className="shrink-0" />
-                Success! Redirecting to library...
-              </div>
-            )}
+              {importError && (
+                <div className="flex items-start gap-3 text-red-500 text-[10px] font-bold bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
+                  <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                  <p>{importError}</p>
+                </div>
+              )}
+              
+              {importSuccess && (
+                <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
+                  <CheckCircle2 size={14} className="shrink-0" />
+                  Song imported! Redirecting...
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

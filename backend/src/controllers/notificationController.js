@@ -11,9 +11,9 @@ exports.getUnreadCount = async (req, res) => {
       where: { userId, isRead: false }
     });
 
-    // 2. Team Invitations
-    const invitationCount = await prisma.invitation.count({
-      where: { receiverId: userId, status: 'PENDING' }
+    // 2. Team Invitations (Pending Lineups)
+    const invitationCount = await prisma.lineup.count({
+      where: { userId, status: 'PENDING' }
     });
 
     let adminCount = 0;
@@ -51,11 +51,11 @@ exports.getNotifications = async (req, res) => {
       take: 50
     });
 
-    // 2. Pending Invitations
-    const invitations = await prisma.invitation.findMany({
-      where: { receiverId: userId, status: 'PENDING' },
+    // 2. Pending Invitations (from Lineup)
+    const invitations = await prisma.lineup.findMany({
+      where: { userId, status: 'PENDING' },
       include: { service: { select: { title: true } } },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { id: 'desc' } // Lineup doesn't have createdAt, using id as proxy for order
     });
 
     // 3. Admin: Subscription Requests
@@ -72,7 +72,7 @@ exports.getNotifications = async (req, res) => {
     const mappedInvitations = invitations.map(inv => ({
       id: inv.id,
       message: `Team Invitation: You've been invited to join the lineup for "${inv.service.title}".`,
-      createdAt: inv.createdAt,
+      createdAt: new Date(), // Lineup doesn't have createdAt, using current date for UI
       isRead: false,
       type: 'INVITATION'
     }));

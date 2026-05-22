@@ -11,12 +11,15 @@ export const importSongFromUrl = async (url) => {
   });
   return response.data;
 };
-
-export const searchOnline = async (query) => {
+export const importSongFromPdf = async (file) => {
   const token = localStorage.getItem('token');
-  const response = await axios.get(`${API_URL}/import/search?q=${encodeURIComponent(query)}`, {
+  const formData = new FormData();
+  formData.append('pdf', file);
+  
+  const response = await axios.post(`${API_URL}/import/pdf`, formData, {
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data'
     }
   });
   return response.data;

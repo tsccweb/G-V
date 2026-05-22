@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const pdf = require('pdf-parse');
 
 const BROWSER_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -121,5 +122,38 @@ exports.importSong = async (req, res) => {
                     'Failed to import song from URL. Please ensure it\'s a valid Ultimate Guitar or Songsterr link.';
     
     res.status(status).json({ error: message, details: error.message });
+  }
+};
+
+exports.importPdf = async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded.' });
+
+  try {
+    const data = await pdf(req.file.buffer);
+    const text = data.text;
+
+    // Split into lines to extract title/artist
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    let songData = {
+      title: lines[0] || 'Unknown Title',
+      artist: lines[1] || 'Unknown Artist',
+      lyrics: text,
+      chords: '',
+      key: '',
+      category: 'Imported'
+    };
+
+    // Try to clean up artist name (UG often has "Song name by Artist" or similar)
+    if (songData.title.toLowerCase().includes('by ')) {
+      const parts = songData.title.split(/ by /i);
+      songData.title = parts[0].trim();
+      songData.artist = parts[1].trim();
+    }
+
+    res.json(songData);
+  } catch (error) {
+    console.error('PDF Import Error:', error.message);
+    res.status(500).json({ error: 'Failed to parse PDF content. Please ensure it is a valid text-based PDF.' });
   }
 };
