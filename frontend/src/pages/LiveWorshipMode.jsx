@@ -635,7 +635,7 @@ function LiveWorshipMode() {
           white-space: pre !important;
           line-height: 1.2 !important;
         }
-        .chord-renderer .chord { 
+        .chord-renderer .chord, .chord-renderer .chord-line { 
           color: ${settings?.chordColor || '#60a5fa'} !important; 
           font-weight: bold !important; 
           white-space: pre !important; 
@@ -657,20 +657,39 @@ function ChordSheetRenderer({ lyrics: rawLyrics, transpose, fontSize, isSlide, s
   const renderedHtml = useMemo(() => {
     try {
       const isAlreadyChordPro = rawLyrics.includes('[') && rawLyrics.includes(']');
-      const processedLyrics = getTransposableLyrics(rawLyrics, isAlreadyChordPro ? 0 : transpose);
-
-      const songObj = new ChordSheetJS.ChordProParser().parse(processedLyrics);
-      let transposedSong = songObj;
-      if (transpose !== 0 && isAlreadyChordPro) {
-        transposedSong = songObj.transpose(transpose);
+      
+      // If it's already ChordPro, we don't use getTransposableLyrics (which is for plain text)
+      // Instead, we parse directly and transpose using ChordSheetJS
+      let songObj;
+      if (isAlreadyChordPro) {
+        songObj = new ChordSheetJS.ChordProParser().parse(rawLyrics);
+        if (transpose !== 0) {
+          songObj = songObj.transpose(transpose);
+        }
+      } else {
+        // For plain text, we use getTransposableLyrics to convert to ChordPro first
+        const chordProLyrics = getTransposableLyrics(rawLyrics, transpose);
+        songObj = new ChordSheetJS.ChordProParser().parse(chordProLyrics);
       }
 
+      // Convert to HTML using a custom formatter or manual replacement
+      // TextFormatter gives plain text with chords on top, no brackets.
+      // We'll use a formatter that keeps brackets for easier styling if needed,
+      // or just handle the TextFormatter output.
       const formatter = new ChordSheetJS.TextFormatter();
-      const rawText = formatter.format(transposedSong);
+      const rawText = formatter.format(songObj);
 
-      // Simple highlight for chords in monospace environment
+      // Re-map the multi-line text to apply our .chord styling
+      // TextFormatter output:
+      //  C     G
+      // Lyrics...
+      // We need to identify which lines are chord lines.
       return rawText.split('\n').map(line => {
-        return line.replace(/\[(.*?)\]/g, '<span class="chord">$1</span>');
+        // If the line is purely chords (and spaces), wrap it in a span
+        if (line.trim() && line.split(/\s+/).every(w => !w || /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w))) {
+          return `<span class="chord-line">${line}</span>`;
+        }
+        return line;
       }).join('\n');
     } catch (err) {
       console.error('Chord parsing error:', err);
@@ -700,7 +719,7 @@ function getTransposableLyrics(raw, amount) {
   return normalized.split('\n').map(line => {
     const trimmed = line.trim();
     if (!trimmed) return line;
-    const words = trimmed.split(/\s+/);
+    const words = trimmed.split(/\s+/).filter(w => w.length > 0);
 
     if (words.length > 0 && words.every(isChord)) {
       if (amount === 0) return line.replace(/([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi, '[$1]');
@@ -717,22 +736,16 @@ function getTransposableLyrics(raw, amount) {
 
       matches.forEach(({ chord, index }) => {
         const newChord = transposeChord(chord, amount);
-        const diff = newChord.length - chord.length;
-        const pos = index + offset;
-
-        const before = newLine.substring(0, pos);
-        const after = newLine.substring(pos + chord.length);
-
-        let compAfter = after;
-        if (diff > 0) {
-          for (let i = 0; i < diff; i++) if (compAfter.startsWith(' ')) compAfter = compAfter.substring(1);
-        } else if (diff < 0) {
-          compAfter = ' '.repeat(Math.abs(diff)) + compAfter;
-        }
-
         const wrapped = '[' + newChord + ']';
-        newLine = before + wrapped + compAfter;
-        offset += (wrapped.length - chord.length) + (after.length - compAfter.length);
+        
+        // We replace the chord with the bracketed version
+        // Pre-calculating padding is not needed if we are going into ChordProParser next,
+        // but we want to maintain the relative visual position if possible.
+        const before = newLine.substring(0, index + offset);
+        const after = newLine.substring(index + offset + chord.length);
+        
+        newLine = before + wrapped + after;
+        offset += (wrapped.length - chord.length);
       });
       return newLine;
     }
