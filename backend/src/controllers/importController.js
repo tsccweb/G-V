@@ -1,6 +1,9 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const pdf = require('pdf-parse');
+const PDFParse = require('pdf-parse');
+
+// Handle different pdf-parse export formats
+const pdf = typeof PDFParse === 'function' ? PDFParse : PDFParse.default || PDFParse;
 
 const BROWSER_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -152,8 +155,17 @@ exports.importPdf = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
   try {
+    if (!pdf || typeof pdf !== 'function') {
+      console.error('PDF parser is not a function:', typeof pdf);
+      return res.status(500).json({ error: 'PDF parser not properly initialized.' });
+    }
+
     const data = await pdf(req.file.buffer);
     const text = data.text;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ error: 'PDF contains no readable text. Please ensure it is a valid text-based PDF.' });
+    }
 
     // Split into lines to extract title/artist
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -176,7 +188,7 @@ exports.importPdf = async (req, res) => {
 
     res.json(songData);
   } catch (error) {
-    console.error('PDF Import Error:', error.message);
-    res.status(500).json({ error: 'Failed to parse PDF content. Please ensure it is a valid text-based PDF.' });
+    console.error('PDF Import Error:', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to parse PDF content. Please ensure it is a valid text-based PDF.', details: error.message });
   }
 };

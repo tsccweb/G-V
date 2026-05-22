@@ -17,13 +17,18 @@ export const importSongFromPdf = async (file) => {
   const formData = new FormData();
   formData.append('pdf', file);
   
-  const response = await axios.post(`${API_URL}/import/pdf`, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data'
-    }
-  });
-  return response.data;
+  try {
+    const response = await axios.post(`${API_URL}/import/pdf`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('PDF Import error:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const searchOnline = async (query) => {
