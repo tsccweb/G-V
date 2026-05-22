@@ -3,11 +3,27 @@ const cheerio = require('cheerio');
 
 // pdf-parse returns a default export function
 let pdf;
+let pdfLoadError = null;
+
 try {
   const pdfModule = require('pdf-parse');
+  console.log('[PDF-Parse] Module loaded successfully');
+  console.log('[PDF-Parse] Type of module:', typeof pdfModule);
+  console.log('[PDF-Parse] Has default export:', !!pdfModule.default);
+  console.log('[PDF-Parse] Module keys:', Object.keys(pdfModule));
+  
   pdf = pdfModule.default || pdfModule;
+  
+  console.log('[PDF-Parse] PDF function type:', typeof pdf);
+  if (typeof pdf !== 'function') {
+    console.error('[PDF-Parse] ERROR: PDF is not a function!', typeof pdf);
+  } else {
+    console.log('[PDF-Parse] Successfully assigned PDF parser function');
+  }
 } catch (e) {
-  console.error('Failed to load pdf-parse:', e.message);
+  pdfLoadError = e;
+  console.error('[PDF-Parse] Failed to load module:', e.message);
+  console.error('[PDF-Parse] Stack:', e.stack);
 }
 
 const BROWSER_HEADERS = {
@@ -160,20 +176,31 @@ exports.importPdf = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded.' });
 
   try {
+    console.log('[PDF-Import] Starting PDF import');
+    console.log('[PDF-Import] PDF available:', !!pdf);
+    console.log('[PDF-Import] PDF type:', typeof pdf);
+    
     if (!pdf || typeof pdf !== 'function') {
-      console.error('PDF parser not available:', typeof pdf);
-      return res.status(500).json({ error: 'PDF parsing service unavailable. Please try again.' });
+      const errorMsg = pdfLoadError 
+        ? `PDF parser failed to load: ${pdfLoadError.message}`
+        : `PDF parser not available (type: ${typeof pdf})`;
+      console.error('[PDF-Import] ERROR:', errorMsg);
+      return res.status(500).json({ error: 'PDF parsing service unavailable. Please try again.', debug: errorMsg });
     }
 
+    console.log('[PDF-Import] Buffer size:', req.file.buffer.length);
     let data;
     try {
       data = await pdf(req.file.buffer);
+      console.log('[PDF-Import] PDF parsed successfully');
     } catch (parseErr) {
-      console.error('PDF parsing failed:', parseErr.message);
+      console.error('[PDF-Import] PDF parsing error:', parseErr.message);
+      console.error('[PDF-Import] Parse error stack:', parseErr.stack);
       throw parseErr;
     }
 
     const text = data.text;
+    console.log('[PDF-Import] Extracted text length:', text.length);
 
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ error: 'PDF contains no readable text. Please ensure it is a valid text-based PDF.' });
