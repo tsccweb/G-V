@@ -11,6 +11,7 @@ export const importSongFromUrl = async (url) => {
   });
   return response.data;
 };
+
 export const importSongFromPdf = async (file) => {
   const token = localStorage.getItem('token');
   const formData = new FormData();
@@ -20,6 +21,16 @@ export const importSongFromPdf = async (file) => {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+export const searchOnline = async (query) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(`${API_URL}/import/search?q=${encodeURIComponent(query)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
     }
   });
   return response.data;
