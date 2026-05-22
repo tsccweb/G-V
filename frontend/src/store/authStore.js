@@ -36,6 +36,11 @@ const useAuthStore = create((set) => ({
     });
   },
 
+  setError: (message) => {
+    set({ error: message, isLoading: false });
+    setTimeout(() => set({ error: null }), 3000);
+  },
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
@@ -44,7 +49,7 @@ const useAuthStore = create((set) => ({
       localStorage.setItem('token', token);
       set({ user, token, isLoading: false });
     } catch (error) {
-      set({ error: error.response?.data?.error || 'Login failed', isLoading: false });
+      useAuthStore.getState().setError(error.response?.data?.error || 'Login failed');
     }
   },
 
@@ -58,7 +63,7 @@ const useAuthStore = create((set) => ({
       localStorage.setItem('token', token);
       set({ user, token, isLoading: false });
     } catch (error) {
-      set({ error: error.response?.data?.error || 'Registration failed', isLoading: false });
+      useAuthStore.getState().setError(error.response?.data?.error || 'Registration failed');
     }
   },
 
@@ -70,7 +75,7 @@ const useAuthStore = create((set) => ({
       localStorage.setItem('token', token);
       set({ user, token, isLoading: false });
     } catch (error) {
-      set({ error: error.response?.data?.error || 'Google login failed', isLoading: false });
+      useAuthStore.getState().setError(error.response?.data?.error || 'Google login failed');
     }
   },
 
@@ -81,7 +86,7 @@ const useAuthStore = create((set) => ({
       set({ isLoading: false });
       return true;
     } catch (error) {
-      set({ error: error.response?.data?.error || 'Failed to send OTP', isLoading: false });
+      useAuthStore.getState().setError(error.response?.data?.error || 'Failed to send OTP');
       return false;
     }
   },
@@ -93,7 +98,7 @@ const useAuthStore = create((set) => ({
       set({ isLoading: false });
       return response.data.valid;
     } catch (error) {
-      set({ error: error.response?.data?.error || 'Invalid OTP', isLoading: false });
+      useAuthStore.getState().setError(error.response?.data?.error || 'Invalid OTP');
       return false;
     }
   },
@@ -105,7 +110,7 @@ const useAuthStore = create((set) => ({
       set({ isLoading: false });
       return true;
     } catch (error) {
-      set({ error: error.response?.data?.error || 'Failed to reset password', isLoading: false });
+      useAuthStore.getState().setError(error.response?.data?.error || 'Failed to reset password');
       return false;
     }
   },
