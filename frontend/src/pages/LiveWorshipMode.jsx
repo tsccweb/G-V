@@ -816,34 +816,28 @@ function guessOriginalKey(lyrics) {
   const chordRegex = /([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi;
   
   // If it's already ChordPro, look for the first chord in brackets
-  if (normalized.includes('[') && normalized.includes(']')) {
-    const firstBracketMatch = normalized.match(/\[([A-G][b#]?[^\]]*)\]/i);
-    if (firstBracketMatch && firstBracketMatch[1]) {
-      const baseKey = firstBracketMatch[1].match(/^[A-G][b#]?/)[0];
-      const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
-      return flatMap[baseKey] || baseKey;
-    }
+  const bracketMatch = normalized.match(/\[([A-G][b#]?[^\]]*)\]/i);
+  if (bracketMatch && bracketMatch[1]) {
+    const baseKey = bracketMatch[1].match(/^[A-G][b#]?/i)[0].toUpperCase();
+    const flatMap = { 'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#' };
+    return flatMap[baseKey] || baseKey;
   }
 
   const lines = normalized.split('\n');
-  const isPotentialChordLine = (line) => {
+  for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) return false;
+    if (!trimmed) continue;
+
     // A line is likely a chord line if it's mostly chords and spaces
     const words = trimmed.split(/\s+/).filter(w => w.length > 0);
-    const chords = words.filter(w => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w));
-    return chords.length > 0 && chords.length >= words.length * 0.5; // At least 50% chords
-  };
-
-  for (const line of lines) {
-    if (isPotentialChordLine(line)) {
+    const chords = words.filter(w => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/i.test(w));
+    
+    if (chords.length > 0 && chords.length >= words.length * 0.5) {
       const match = line.match(chordRegex);
       if (match && match[0]) {
-        const baseKey = match[0].match(/^[A-G][b#]?/)[0];
-        const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
-        let nk = baseKey;
-        if (flatMap[nk]) nk = flatMap[nk];
-        return nk;
+        const baseKey = match[0].match(/^[A-G][b#]?/i)[0].toUpperCase();
+        const flatMap = { 'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#' };
+        return flatMap[baseKey] || baseKey;
       }
     }
   }

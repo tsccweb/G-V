@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getServices, deleteService } from '../services/serviceService';
-import { Calendar, Plus, Users, ChevronRight, Trash2, Clock, Music, Sparkles, MoreVertical } from 'lucide-react';
+import { Calendar, Plus, Users, ChevronRight, Trash2, Clock, Music, Sparkles, MoreVertical, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
