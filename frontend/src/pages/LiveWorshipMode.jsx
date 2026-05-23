@@ -155,6 +155,14 @@ function LiveWorshipMode() {
     const originalKey = getNormKey(currentItem?.song?.key) || guessOriginalKey(currentItem?.song?.lyrics);
     const targetKey = getNormKey(currentItem?.key);
 
+    console.log('[LiveWorship] Transpose Calc:', {
+      songTitle: currentItem?.song?.title,
+      originalKey,
+      targetKey,
+      rawSongKey: currentItem?.song?.key,
+      rawItemKey: currentItem?.key
+    });
+
     if (originalKey && targetKey) {
       const fromIdx = keys.indexOf(originalKey);
       const toIdx = keys.indexOf(targetKey);
@@ -162,6 +170,7 @@ function LiveWorshipMode() {
       if (fromIdx !== -1 && toIdx !== -1) {
         let diff = (toIdx - fromIdx) % 12;
         while (diff < 0) diff += 12;
+        console.log('[LiveWorship] Setting Transpose:', diff);
         setTranspose(diff);
       } else {
         setTranspose(0);
@@ -194,7 +203,7 @@ function LiveWorshipMode() {
         currentItemId: items[currentIndex]?.id,
         currentSlide: currentSlideIndex,
         isPaused,
-        // We'll skip raw scroll sync for simplicity, matching slides is more important
+        transpose, // Send current transposition to followers
       });
     }
   }, [currentIndex, currentSlideIndex, isPaused, isHosting]);
@@ -207,6 +216,9 @@ function LiveWorshipMode() {
         setCurrentIndex(liveIdx);
         setCurrentSlideIndex(session.currentSlide);
         setIsPaused(session.isPaused);
+        if (session.transpose !== undefined) {
+          setTranspose(session.transpose);
+        }
       }
     }
   }, [session, isHosting]);
@@ -762,7 +774,7 @@ function getTransposableLyrics(raw, amount) {
 
 // Helper for display transposition labels
 function transposeChord(chord, amount) {
-  if (!chord) return 'C';
+  if (!chord || chord === '?' || chord === 'Missing') return 'C';
   const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
 
@@ -783,21 +795,35 @@ function guessOriginalKey(lyrics) {
   const normalized = lyrics.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const chordRegex = /([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi;
   
-  // Find the first line that looks like it contains chords
+  // If it's already ChordPro, look for the first chord in brackets
+  if (normalized.includes('[') && normalized.includes(']')) {
+    const firstBracketMatch = normalized.match(/\[([A-G][b#]?[^\]]*)\]/i);
+    if (firstBracketMatch && firstBracketMatch[1]) {
+      const baseKey = firstBracketMatch[1].match(/^[A-G][b#]?/)[0];
+      const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+      return flatMap[baseKey] || baseKey;
+    }
+  }
+
   const lines = normalized.split('\n');
-  const isChordLine = (line) => {
-    const words = line.trim().split(/\s+/).filter(w => w.length > 0);
-    return words.length > 0 && words.every(w => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w));
+  const isPotentialChordLine = (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return false;
+    // A line is likely a chord line if it's mostly chords and spaces
+    const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+    const chords = words.filter(w => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w));
+    return chords.length > 0 && chords.length >= words.length * 0.5; // At least 50% chords
   };
 
   for (const line of lines) {
-    if (isChordLine(line)) {
+    if (isPotentialChordLine(line)) {
       const match = line.match(chordRegex);
       if (match && match[0]) {
-        // Strip out accidental info for base key (e.g. Dm -> D)
         const baseKey = match[0].match(/^[A-G][b#]?/)[0];
         const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
-        return flatMap[baseKey] || baseKey;
+        let nk = baseKey;
+        if (flatMap[nk]) nk = flatMap[nk];
+        return nk;
       }
     }
   }

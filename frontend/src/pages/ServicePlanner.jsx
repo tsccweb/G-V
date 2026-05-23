@@ -42,6 +42,7 @@ function ServicePlanner() {
   const [selectedSongForFlow, setSelectedSongForFlow] = useState(null);
   const [selectedKey, setSelectedKey] = useState('');
   const [memberToRemove, setMemberToRemove] = useState(null);
+  const [showFinishModal, setShowFinishModal] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
 
   const { data: songsData } = useQuery({
@@ -155,9 +156,12 @@ function ServicePlanner() {
   };
 
   const handleFinishService = () => {
-    if (confirm('Finish this service? It will moved to the Service History and you will no longer be able to edit items or use Live Mode.')) {
-      statusMutation.mutate('COMPLETED');
-    }
+    setShowFinishModal(true);
+  };
+
+  const confirmFinishService = () => {
+    statusMutation.mutate('COMPLETED');
+    setShowFinishModal(false);
   };
 
 
@@ -566,6 +570,38 @@ function ServicePlanner() {
                 className="flex-1 px-4 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-400 transition flex items-center justify-center gap-2"
               >
                 {removeLineupMutation.isPending ? 'Removing...' : 'Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFinishModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm flex flex-col shadow-2xl p-6 text-center space-y-6">
+            <div className="mx-auto w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-2">
+              <Check size={32} />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Finish Service?</h3>
+              <p className="text-sm text-zinc-400 leading-relaxed px-2">
+                This will move the service to <span className="text-white font-bold">History</span>. You will no longer be able to edit the flow or use Live Mode.
+              </p>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={confirmFinishService}
+                disabled={statusMutation.isPending}
+                className="w-full py-4 bg-emerald-500 text-black font-black rounded-2xl hover:bg-emerald-400 transition-all active:scale-95 shadow-xl shadow-emerald-500/10 flex items-center justify-center gap-2"
+              >
+                {statusMutation.isPending ? 'Processing...' : 'Yes, Finish Service'}
+              </button>
+              <button
+                onClick={() => setShowFinishModal(false)}
+                className="w-full py-3 bg-zinc-900 text-zinc-500 font-bold rounded-2xl hover:text-white transition-colors"
+              >
+                Not Yet
               </button>
             </div>
           </div>

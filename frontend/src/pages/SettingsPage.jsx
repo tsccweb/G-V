@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
-/* ── Presets ── */
 const FONTS = [
   { id: 'Inter', label: 'CLEAN', family: 'Inter, sans-serif' },
   { id: 'Georgia', label: 'SERIF', family: 'Georgia, serif' },
@@ -19,8 +18,7 @@ const FONTS = [
 const BG_COLORS = ['#000000', '#1A237E', '#3E2723', '#1A1A1A', '#0D47A1', '#263238'];
 const TEXT_COLORS = ['#FFFFFF', '#B0BEC5', '#FFC107', '#69F0AE', '#D1C4E9', '#000000'];
 const ROLES = [
-  'ADMIN', 'PASTOR', 'WORSHIP_LEADER', 'MUSICIAN', 'VOCALIST', 
-  'SCRIPTURE_READER', 'PRAYER_LEADER', 'MEDIA_TEAM', 'SOUND_TEAM', 'MEMBER'
+  'PASTOR', 'WORSHIP_LEADER', 'MUSICIAN', 'MEMBER'
 ];
 
 /* ── Accordion button ── */

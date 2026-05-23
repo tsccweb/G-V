@@ -50,11 +50,11 @@ exports.joinByCode = async (req, res) => {
 // Sync Live Session State (Leader pushes)
 exports.syncState = async (req, res) => {
   const { id } = req.params;
-  const { currentItemId, currentSlide, currentScroll, isPaused } = req.body;
+  const { currentItemId, currentSlide, currentScroll, isPaused, transpose } = req.body;
   try {
     const session = await prisma.liveSession.update({
       where: { id },
-      data: { currentItemId, currentSlide, currentScroll, isPaused, updatedAt: new Date() }
+      data: { currentItemId, currentSlide, currentScroll, isPaused, transpose, updatedAt: new Date() }
     });
     res.json(session);
   } catch (error) {

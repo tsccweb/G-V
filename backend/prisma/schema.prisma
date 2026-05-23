@@ -168,6 +168,7 @@ model LiveSession {
   currentSlide    Int          @default(0)
   currentScroll   Float        @default(0)
   isPaused        Boolean      @default(false)
+  transpose       Int          @default(0)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 }

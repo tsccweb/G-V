@@ -48,7 +48,6 @@ function Register() {
   const roles = [
     { value: 'MEMBER', label: 'Regular Member' },
     { value: 'MUSICIAN', label: 'Musician' },
-    { value: 'VOCALIST', label: 'Vocalist' },
     { value: 'WORSHIP_LEADER', label: 'Worship Leader' },
     { value: 'PASTOR', label: 'Pastor' },
   ];

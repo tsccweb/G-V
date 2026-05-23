@@ -14,10 +14,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const roleIcons = {
   MEMBER: <Users size={16} />,
   MUSICIAN: <Music size={16} />,
-  VOCALIST: <Mic size={16} />,
   WORSHIP_LEADER: <Star size={16} />,
-  MEDIA_TEAM: <Monitor size={16} />,
-  SOUND_TEAM: <Headphones size={16} />,
+  PASTOR: <Shield size={16} />,
 };
 
 function TeamLineup() {
@@ -339,7 +337,10 @@ function TeamLineup() {
                     onChange={e => setInviteRole(e.target.value)}
                     className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
                   >
-                    {Object.keys(roleIcons).map(role => <option key={role} value={role}>{role}</option>)}
+                    <option value="MEMBER">Member</option>
+                    <option value="MUSICIAN">Musician</option>
+                    <option value="WORSHIP_LEADER">Worship Leader</option>
+                    <option value="PASTOR">Pastor</option>
                   </select>
                 </div>
                 <div className="md:col-span-2 space-y-1.5">
