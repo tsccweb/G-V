@@ -111,7 +111,7 @@ function ServicePlanner() {
       duration: 5,
       order: items.length,
       songId: song.id,
-      key: key || song.key
+      key: key || song.key || (guessOriginalKey(song.lyrics) || 'C')
     });
     setIsSongModalOpen(false);
     setSelectedSongForFlow(null);
@@ -429,7 +429,12 @@ function ServicePlanner() {
           <div className="bg-zinc-900 border border-zinc-800 rounded-[2rem] w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
             <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">
-                {selectedSongForFlow ? 'Select Key' : 'Select a Song'}
+                {selectedSongForFlow ? (
+                  <div className="flex flex-col gap-1">
+                    <span>Target Key for Service</span>
+                    <span className="text-xs text-zinc-500 font-normal">Original Key: {selectedSongForFlow.key || guessOriginalKey(selectedSongForFlow.lyrics) || 'Missing'}</span>
+                  </div>
+                ) : 'Select a Song'}
               </h2>
               <button 
                 onClick={() => {
@@ -569,6 +574,31 @@ function ServicePlanner() {
 
     </div>
   );
+}
+
+// Helper for detecting the likely key from lyrics if metadata is missing
+function guessOriginalKey(lyrics) {
+  if (!lyrics) return null;
+  const normalized = lyrics.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const chordRegex = /([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi;
+  
+  const lines = normalized.split('\n');
+  const isChordLine = (line) => {
+    const words = line.trim().split(/\s+/).filter(w => w.length > 0);
+    return words.length > 0 && words.every(w => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w));
+  };
+
+  for (const line of lines) {
+    if (isChordLine(line)) {
+      const match = line.match(chordRegex);
+      if (match && match[0]) {
+        const baseKey = match[0].match(/^[A-G][b#]?/)[0];
+        const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+        return flatMap[baseKey] || baseKey;
+      }
+    }
+  }
+  return null;
 }
 
 export default ServicePlanner;

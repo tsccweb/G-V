@@ -288,7 +288,14 @@ function UserCard({ user, onUpdate, onDelete }) {
           <PlanIcon size={14} className={user.plan === 'FREE' ? 'text-zinc-600' : 'text-emerald-400'} />
           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{user.plan}</span>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">{user.role}</span>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">{user.role}</span>
+          {user.planExpiresAt && (
+            <span className="text-[9px] font-bold text-blue-400/70 lowercase tracking-tighter italic">
+              Expires {new Date(user.planExpiresAt).toLocaleDateString()}
+            </span>
+          )}
+        </div>
       </div>
 
       {isEditing && (

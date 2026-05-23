@@ -141,21 +141,23 @@ function LiveWorshipMode() {
   const activeSlide = slides[currentSlideIndex];
   
   // Calculate initial transposition when song changes
-  // Works for both ServiceItem (has type='SONG') and WorshipFlowSong (no type field)
   useEffect(() => {
-    if (currentItem?.key && currentItem?.song?.key) {
-      const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-      const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
-      
-      const getNormKey = (k) => {
-        if (!k) return 'C';
-        let nk = k.split(' ')[0]; // Remove extra info like ' (Original)'
-        if (flatMap[nk]) nk = flatMap[nk];
-        return nk;
-      };
+    const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+    
+    const getNormKey = (k) => {
+      if (!k) return null;
+      let nk = k.split(' ')[0]; 
+      if (flatMap[nk]) nk = flatMap[nk];
+      return nk;
+    };
 
-      const fromIdx = keys.indexOf(getNormKey(currentItem.song.key));
-      const toIdx = keys.indexOf(getNormKey(currentItem.key));
+    const originalKey = getNormKey(currentItem?.song?.key) || guessOriginalKey(currentItem?.song?.lyrics);
+    const targetKey = getNormKey(currentItem?.key);
+
+    if (originalKey && targetKey) {
+      const fromIdx = keys.indexOf(originalKey);
+      const toIdx = keys.indexOf(targetKey);
       
       if (fromIdx !== -1 && toIdx !== -1) {
         let diff = (toIdx - fromIdx) % 12;
@@ -438,7 +440,9 @@ function LiveWorshipMode() {
                 <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Key</span>
                 <div className="flex items-center gap-2 bg-black/50 p-1 rounded-xl border border-white/5">
                   <button onClick={() => setTranspose(t => (t - 1 + 12) % 12)} className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-lg text-sm font-black text-blue-400">♭</button>
-                  <span className="text-sm font-black text-white min-w-[2rem] text-center">{transposeChord(currentItem?.song?.key || 'C', transpose)}</span>
+                  <span className="text-sm font-black text-white min-w-[2rem] text-center">
+                    {transposeChord(currentItem?.song?.key || guessOriginalKey(currentItem?.song?.lyrics) || 'C', transpose)}
+                  </span>
                   <button onClick={() => setTranspose(t => (t + 1) % 12)} className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-lg text-sm font-black text-blue-400">♯</button>
                 </div>
               </div>
@@ -771,6 +775,33 @@ function transposeChord(chord, amount) {
     while (newIdx < 0) newIdx += 12;
     return notes[newIdx];
   });
+}
+
+// Helper for detecting the likely key from lyrics if metadata is missing
+function guessOriginalKey(lyrics) {
+  if (!lyrics) return null;
+  const normalized = lyrics.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const chordRegex = /([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi;
+  
+  // Find the first line that looks like it contains chords
+  const lines = normalized.split('\n');
+  const isChordLine = (line) => {
+    const words = line.trim().split(/\s+/).filter(w => w.length > 0);
+    return words.length > 0 && words.every(w => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w));
+  };
+
+  for (const line of lines) {
+    if (isChordLine(line)) {
+      const match = line.match(chordRegex);
+      if (match && match[0]) {
+        // Strip out accidental info for base key (e.g. Dm -> D)
+        const baseKey = match[0].match(/^[A-G][b#]?/)[0];
+        const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+        return flatMap[baseKey] || baseKey;
+      }
+    }
+  }
+  return null;
 }
 
 export default LiveWorshipMode;

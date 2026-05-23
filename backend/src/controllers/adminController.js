@@ -11,6 +11,7 @@ exports.getAllUsers = async (req, res) => {
         lastName: true,
         role: true,
         plan: true,
+        planExpiresAt: true,
         createdAt: true
       },
       orderBy: { createdAt: 'desc' }
