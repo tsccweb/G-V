@@ -11,6 +11,7 @@ function ServiceList() {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [view, setView] = useState('active'); // 'active' or 'history'
 
   const { data: services, isLoading, error } = useQuery({
     queryKey: ['services'],
@@ -32,8 +33,12 @@ function ServiceList() {
   );
   if (error) return <div className="p-8 text-center text-red-400">Error loading services</div>;
 
-  const upcoming = services?.filter(s => new Date(s.date) >= new Date()) || [];
-  const past = services?.filter(s => new Date(s.date) < new Date()) || [];
+  // Filter based on view
+  const activeServices = services?.filter(s => s.status !== 'COMPLETED') || [];
+  const historyServices = services?.filter(s => s.status === 'COMPLETED') || [];
+
+  const upcoming = activeServices.filter(s => new Date(s.date) >= new Date());
+  const past = activeServices.filter(s => new Date(s.date) < new Date());
   const totalMembers = services?.reduce((sum, s) => sum + (s.lineup?.length || 0), 0) || 0;
 
   const ServiceCard = ({ service, isPast }) => {
@@ -50,7 +55,7 @@ function ServiceList() {
         <Link
           to={`/services/${service.id}`}
           className={`block rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] ${
-            isPast
+            isPast || service.status === 'COMPLETED'
               ? 'bg-zinc-950/50 border-zinc-800/50 opacity-60 hover:opacity-80'
               : 'bg-zinc-900 border-zinc-800 hover:border-zinc-600 shadow-lg hover:shadow-xl'
           }`}
@@ -58,7 +63,7 @@ function ServiceList() {
           <div className="flex items-stretch">
             {/* Date Strip */}
             <div className={`flex flex-col items-center justify-center px-5 py-6 border-r ${
-              isPast ? 'border-zinc-800/50' : 'border-zinc-800'
+              isPast || service.status === 'COMPLETED' ? 'border-zinc-800/50' : 'border-zinc-800'
             }`}>
               <span className="text-[9px] font-black tracking-[0.3em] text-zinc-500">{month}</span>
               <span className="text-3xl font-black text-white leading-none mt-1">{day}</span>
@@ -79,6 +84,12 @@ function ServiceList() {
 
               {/* Tags */}
               <div className="flex flex-wrap items-center gap-2 mt-3">
+                {service.status === 'COMPLETED' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-bold text-emerald-400 uppercase">
+                    <Check size={10} />
+                    Finished
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-950 border border-zinc-800 rounded-lg text-[10px] font-bold text-zinc-400">
                   <Users size={10} />
                   {service.lineup?.length || 0}
@@ -156,9 +167,24 @@ function ServiceList() {
       
       {/* Header */}
       <div className="space-y-6">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-emerald-400 mb-2">Worship Services</p>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">Your Services</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-emerald-400 mb-2">Worship Services</p>
+            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              {view === 'active' ? 'Your Services' : 'Service History'}
+            </h1>
+          </div>
+          <button 
+            onClick={() => setView(view === 'active' ? 'history' : 'active')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-bold transition-all ${
+              view === 'history' 
+                ? 'bg-white text-black border-white shadow-lg' 
+                : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'
+            }`}
+          >
+            <Clock size={16} />
+            <span>{view === 'active' ? 'History' : 'Back to Active'}</span>
+          </button>
         </div>
 
         {/* Mini Stats */}
@@ -178,33 +204,65 @@ function ServiceList() {
         </div>
       </div>
 
-      {/* Upcoming Services */}
-      {upcoming.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500 flex items-center gap-2">
-            <Sparkles size={14} className="text-emerald-400" />
-            Upcoming
-          </h2>
-          <div className="space-y-3">
-            {upcoming.map(service => (
-              <ServiceCard key={service.id} service={service} isPast={false} />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Conditional Content */}
+      {view === 'active' ? (
+        <>
+          {/* Upcoming Services */}
+          {upcoming.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500 flex items-center gap-2">
+                <Sparkles size={14} className="text-emerald-400" />
+                Upcoming
+              </h2>
+              <div className="space-y-3">
+                {upcoming.map(service => (
+                  <ServiceCard key={service.id} service={service} isPast={false} />
+                ))}
+              </div>
+            </div>
+          )}
 
-      {/* Past Services */}
-      {past.length > 0 && (
+          {/* Past Services (Not finished yet) */}
+          {past.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500 flex items-center gap-2">
+                <Clock size={14} />
+                Past Services
+              </h2>
+              <div className="space-y-3">
+                {past.map(service => (
+                  <ServiceCard key={service.id} service={service} isPast={true} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeServices.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-zinc-800 p-12 text-center">
+              <Calendar className="mx-auto mb-4 text-zinc-700" size={48} />
+              <h3 className="text-xl font-bold text-white mb-2">No active services</h3>
+              <p className="text-sm text-zinc-500 max-w-xs mx-auto">
+                Create a new worship service or check your history for completed ones.
+              </p>
+            </div>
+          )}
+        </>
+      ) : (
         <div className="space-y-3">
           <h2 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500 flex items-center gap-2">
             <Clock size={14} />
-            Past Services
+            Finished Services
           </h2>
           <div className="space-y-3">
-            {past.map(service => (
+            {historyServices.map(service => (
               <ServiceCard key={service.id} service={service} isPast={true} />
             ))}
           </div>
+          {historyServices.length === 0 && (
+            <div className="text-center py-20 text-zinc-500 italic text-sm">
+              Your service history is empty.
+            </div>
+          )}
         </div>
       )}
 

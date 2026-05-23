@@ -9,7 +9,8 @@ const {
   getMyInvitations, 
   respondToInvitation, 
   getMyTeam,
-  removeFromLineup 
+  removeFromLineup,
+  updateServiceStatus
 } = require('../controllers/serviceController');
 const { authMiddleware } = require('../middlewares/authMiddleware');
 
@@ -40,5 +41,6 @@ router.post('/:id/live', (req, res, next) => {
 });
 router.post('/lineup', addToLineup);
 router.delete('/:serviceId/lineup/:id', removeFromLineup);
+router.put('/:id/status', updateServiceStatus);
 
 module.exports = router;

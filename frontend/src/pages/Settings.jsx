@@ -3,7 +3,25 @@ import useAuthStore from '../store/authStore';
 import { LogOut, User as UserIcon, Calendar } from 'lucide-react';
 
 function Settings() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, setUser } = useAuthStore();
+  const [isUpdating, setIsUpdating] = React.useState(false);
+
+  const handleRoleChange = async (newRole) => {
+    setIsUpdating(true);
+    try {
+      const { updateProfile } = await import('../services/authService');
+      const updatedUser = await updateProfile({ role: newRole });
+      setUser(updatedUser);
+      import('react-hot-toast').then(({ toast }) => toast.success('Role updated to ' + newRole.replace('_', ' ')));
+    } catch (err) {
+      console.error(err);
+      import('react-hot-toast').then(({ toast }) => toast.error('Failed to update role'));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const roles = ['MEMBER', 'MUSICIAN', 'WORSHIP_LEADER', 'PASTOR', 'ADMIN'];
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-12 space-y-8 animate-in fade-in duration-500 pb-24 md:pb-12 h-screen">
@@ -18,7 +36,7 @@ function Settings() {
             <UserIcon size={32} className="text-zinc-500" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
+            <h2 className="text-2xl font-bold text-white">{user?.firstName} {user?.lastName}</h2>
             <p className="text-zinc-400 font-medium">{user?.email}</p>
           </div>
         </div>
@@ -26,11 +44,22 @@ function Settings() {
         <div className="space-y-6 text-zinc-400">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-black rounded-2xl border border-zinc-800/50">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Role</p>
-              <p className="text-lg font-bold text-white">{user?.role?.replace('_', ' ')}</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Account Role</p>
+              <select 
+                value={user?.role}
+                disabled={isUpdating}
+                onChange={(e) => handleRoleChange(e.target.value)}
+                className="bg-transparent text-lg font-bold text-white focus:outline-none w-full appearance-none cursor-pointer"
+              >
+                {roles.filter(r => r !== 'ADMIN' || user?.role === 'ADMIN').map(r => (
+                  <option key={r} value={r} className="bg-zinc-900 text-white">
+                    {r.replace('_', ' ')}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="p-4 bg-black rounded-2xl border border-zinc-800/50">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Plan</p>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Current Plan</p>
               <p className="text-lg font-bold text-white">{user?.plan}</p>
             </div>
             {user?.planExpiresAt && (

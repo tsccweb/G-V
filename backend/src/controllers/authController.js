@@ -45,7 +45,7 @@ exports.register = async (req, res) => {
     );
 
     const { password: _, ...safeUser } = user;
-    res.status(201).json({ user: safeUser, token });
+    res.status(201).json({ user: safeUser, token, isNewUser: true });
   } catch (error) {
     console.error('[AuthController] Register Error:', error);
     res.status(400).json({ error: 'Registration failed', details: error.message });
@@ -100,23 +100,35 @@ exports.getMe = async (req, res) => {
 };
 
 exports.updateMe = async (req, res) => {
-  const { firstName, middleName, lastName, phone } = req.body;
-  try {
-    const updated = await prisma.user.update({
-      where: { id: req.user.userId },
-      data: {
-        firstName: firstName !== undefined ? firstName : undefined,
-        middleName: middleName !== undefined ? middleName : undefined,
-        lastName: lastName !== undefined ? lastName : undefined,
-        phone: phone !== undefined ? phone : undefined,
-        role: role !== undefined ? role : undefined
-      },
-      select: {
-        id: true, email: true, firstName: true, middleName: true, lastName: true,
-        phone: true, role: true, plan: true, settings: true
-      }
-    });
-    res.json(updated);
+    const { firstName, middleName, lastName, phone, role } = req.body;
+
+    try {
+        // Security: Only allow updating role if it's not promoting to ADMIN
+        // (Existing Admins can stay Admin)
+        let finalRole = undefined;
+        if (role !== undefined) {
+          const currentUser = await prisma.user.findUnique({ where: { id: req.user.userId } });
+          if (role === 'ADMIN' && currentUser.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Cannot promote self to ADMIN' });
+          }
+          finalRole = role;
+        }
+
+        const updated = await prisma.user.update({
+          where: { id: req.user.userId },
+          data: {
+            firstName: firstName !== undefined ? firstName : undefined,
+            middleName: middleName !== undefined ? middleName : undefined,
+            lastName: lastName !== undefined ? lastName : undefined,
+            phone: phone !== undefined ? phone : undefined,
+            role: finalRole
+          },
+          select: {
+            id: true, email: true, firstName: true, middleName: true, lastName: true,
+            phone: true, role: true, plan: true, settings: true
+          }
+        });
+        res.json(updated);
   } catch (error) {
     console.error('Update Profile Error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
@@ -310,8 +322,12 @@ exports.googleLogin = async (req, res) => {
       include: { settings: true }
     });
 
+    let isNewUser = false;
     if (!user) {
-      // Create new user if they don't exist
+      // Create new user — give them a free 1-month STANDARD trial
+      const planExpiresAt = new Date();
+      planExpiresAt.setMonth(planExpiresAt.getMonth() + 1);
+
       user = await prisma.user.create({
         data: {
           email,
@@ -319,13 +335,15 @@ exports.googleLogin = async (req, res) => {
           firstName: given_name || 'Google',
           lastName: family_name || 'User',
           role: 'MEMBER',
-          plan: 'FREE',
+          plan: 'STANDARD',
+          planExpiresAt,
           avatarUrl: picture,
           authProvider: 'GOOGLE',
           settings: { create: {} }
         },
         include: { settings: true }
       });
+      isNewUser = true;
     } else {
       // Update existing user info if needed
       user = await prisma.user.update({
@@ -345,7 +363,7 @@ exports.googleLogin = async (req, res) => {
     );
 
     const { password: _, ...safeUser } = user;
-    res.json({ user: safeUser, token });
+    res.json({ user: safeUser, token, isNewUser });
   } catch (error) {
     console.error('[AuthController] Google Login Error:', error);
     res.status(500).json({ error: 'Google login failed', details: error.message });

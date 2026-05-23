@@ -61,3 +61,8 @@ export const removeFromLineup = async (serviceId, id) => {
   const response = await axios.delete(`${API_URL}/services/${serviceId}/lineup/${id}`, { headers: getAuthHeader() });
   return response.data;
 };
+
+export const updateServiceStatus = async (id, status) => {
+  const response = await axios.put(`${API_URL}/services/${id}/status`, { status }, { headers: getAuthHeader() });
+  return response.data;
+};

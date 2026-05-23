@@ -20,6 +20,19 @@ function Dashboard() {
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState(null);
   const [importSuccess, setImportSuccess] = useState(false);
+  const [showTrialPopup, setShowTrialPopup] = useState(false);
+
+  // Check if this is a new user who should see the trial popup
+  useEffect(() => {
+    if (localStorage.getItem('showTrialPopup') === 'true') {
+      setShowTrialPopup(true);
+    }
+  }, []);
+
+  const dismissTrialPopup = () => {
+    setShowTrialPopup(false);
+    localStorage.removeItem('showTrialPopup');
+  };
 
   const { data: services } = useQuery({
     queryKey: ['services'],
@@ -82,8 +95,68 @@ function Dashboard() {
     }
   };
 
+  // Calculate trial expiry date for display
+  const trialExpiryDate = user?.planExpiresAt
+    ? new Date(user.planExpiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : null;
+
   return (
     <div className="flex flex-col min-h-full bg-black text-white p-6 md:p-12 pb-24 md:pb-12 space-y-12 animate-in fade-in duration-500">
+
+      {/* Free Standard Trial Welcome Popup */}
+      {showTrialPopup && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-2xl animate-in fade-in duration-500">
+          <div className="relative max-w-md w-full bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 border border-white/10 rounded-[2.5rem] p-10 shadow-[0_0_80px_rgba(245,158,11,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+            {/* Decorative glow */}
+            <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col items-center text-center space-y-6">
+              {/* Icon */}
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <Sparkles size={36} className="text-white" />
+              </div>
+
+              {/* Heading */}
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Welcome to G{'>'}{'/'}{'\\'}{'\\'} V!</h2>
+                <p className="text-zinc-400 text-sm font-medium leading-relaxed">
+                  You've been gifted a <span className="text-amber-400 font-black">FREE Standard Plan</span> for <span className="text-white font-black">1 month</span>!
+                </p>
+              </div>
+
+              {/* Features */}
+              <div className="w-full space-y-3 text-left">
+                {[
+                  { icon: <LayoutList size={16} />, text: 'Service Planning & Scheduling' },
+                  { icon: <Radio size={16} />, text: 'Live Worship Broadcasting' },
+                  { icon: <Users size={16} />, text: 'Team Lineup Management' },
+                  { icon: <Music size={16} />, text: 'Unlimited Song Library' },
+                ].map((feat, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-2xl border border-white/[0.04]">
+                    <div className="p-2 bg-amber-500/10 rounded-xl text-amber-400">{feat.icon}</div>
+                    <span className="text-sm font-bold text-zinc-300">{feat.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Expiry */}
+              {trialExpiryDate && (
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                  Trial valid until {trialExpiryDate}
+                </p>
+              )}
+
+              {/* CTA */}
+              <button
+                onClick={dismissTrialPopup}
+                className="w-full py-4 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-zinc-200 active:scale-95 transition-all text-sm shadow-xl"
+              >
+                Got It — Let's Go!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Top Header */}
       <header className="flex justify-between items-start">

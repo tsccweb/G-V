@@ -141,15 +141,16 @@ function LiveWorshipMode() {
   const activeSlide = slides[currentSlideIndex];
   
   // Calculate initial transposition when song changes
+  // Works for both ServiceItem (has type='SONG') and WorshipFlowSong (no type field)
   useEffect(() => {
-    if (currentItem?.type === 'SONG' && currentItem.key && currentItem.song?.key) {
-      const keys = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+    if (currentItem?.key && currentItem?.song?.key) {
+      const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
       const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
       
       const getNormKey = (k) => {
         if (!k) return 'C';
         let nk = k.split(' ')[0]; // Remove extra info like ' (Original)'
-        if (nk.endsWith('b')) nk = flatMap[nk] || nk;
+        if (flatMap[nk]) nk = flatMap[nk];
         return nk;
       };
 
@@ -160,6 +161,8 @@ function LiveWorshipMode() {
         let diff = (toIdx - fromIdx) % 12;
         while (diff < 0) diff += 12;
         setTranspose(diff);
+      } else {
+        setTranspose(0);
       }
     } else {
       setTranspose(0);

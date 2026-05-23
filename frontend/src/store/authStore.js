@@ -62,8 +62,9 @@ const useAuthStore = create((set) => ({
       const response = await axios.post(`${API_URL}/auth/register`, {
         email, password, firstName, middleName, lastName, phone, role
       });
-      const { user, token } = response.data;
+      const { user, token, isNewUser } = response.data;
       localStorage.setItem('token', token);
+      if (isNewUser) localStorage.setItem('showTrialPopup', 'true');
       set({ user, token, isLoading: false });
     } catch (error) {
       useAuthStore.getState().setError(error.response?.data?.error || 'Registration failed');
@@ -74,8 +75,9 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(`${API_URL}/auth/google-login`, { credential, accessToken });
-      const { user, token } = response.data;
+      const { user, token, isNewUser } = response.data;
       localStorage.setItem('token', token);
+      if (isNewUser) localStorage.setItem('showTrialPopup', 'true');
       set({ user, token, isLoading: false });
     } catch (error) {
       useAuthStore.getState().setError(error.response?.data?.error || 'Google login failed');

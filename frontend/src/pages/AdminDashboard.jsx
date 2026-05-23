@@ -303,6 +303,8 @@ function UserCard({ user, onUpdate, onDelete }) {
               <option value="MEMBER">MEMBER</option>
               <option value="MUSICIAN">MUSICIAN</option>
               <option value="WORSHIP_LEADER">WORSHIP_LEADER</option>
+              <option value="PASTOR">PASTOR</option>
+              <option value="ADMIN">ADMIN</option>
             </select>
           </div>
           <div>

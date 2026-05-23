@@ -428,3 +428,22 @@ exports.goLiveService = async (req, res) => {
     res.status(500).json({ error: 'Failed to go live for service' });
   }
 };
+// Update Service Status (Finish Service)
+exports.updateServiceStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const service = await prisma.service.findFirst({
+      where: { id, userId: req.user.userId }
+    });
+    if (!service) return res.status(403).json({ error: 'Only the creator can change the status' });
+
+    const updated = await prisma.service.update({
+      where: { id },
+      data: { status }
+    });
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update service status' });
+  }
+};

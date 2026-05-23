@@ -8,7 +8,8 @@ import {
   addServiceItem,
   removeServiceItem,
   deleteService,
-  removeFromLineup
+  removeFromLineup,
+  updateServiceStatus
 } from '../services/serviceService';
 import { getSongs } from '../services/songService';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -139,9 +140,23 @@ function ServicePlanner() {
     }
   });
 
+  const statusMutation = useMutation({
+    mutationFn: (status) => updateServiceStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services', id] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+    }
+  });
+
   const handleDeleteService = () => {
     if (confirm('CRITICAL: Are you sure you want to delete this ENTIRE service? This will remove all worship flow items and lineups. This action cannot be undone.')) {
       deleteMutation.mutate();
+    }
+  };
+
+  const handleFinishService = () => {
+    if (confirm('Finish this service? It will moved to the Service History and you will no longer be able to edit items or use Live Mode.')) {
+      statusMutation.mutate('COMPLETED');
     }
   };
 
@@ -193,9 +208,29 @@ function ServicePlanner() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-          <Link to={`/services/${id}/live`} className="w-full md:w-auto px-6 py-2 bg-white hover:bg-zinc-200 text-black rounded-xl shadow-lg shadow-white/5 transition-all font-bold flex items-center justify-center">
-            Go Live
-          </Link>
+          {user?.id === service?.userId && service?.status !== 'COMPLETED' && (
+            <button
+              onClick={handleFinishService}
+              disabled={statusMutation.isPending}
+              className="w-full md:w-auto px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl shadow-lg shadow-emerald-500/10 transition-all font-bold flex items-center justify-center gap-2"
+            >
+              <Check size={18} />
+              <span>Finish Service</span>
+            </button>
+          )}
+
+          {service?.status === 'COMPLETED' && (
+             <div className="px-6 py-2 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-xl font-bold flex items-center justify-center gap-2">
+                <Check size={18} className="text-emerald-500" />
+                <span>Completed</span>
+             </div>
+          )}
+
+          {service?.status !== 'COMPLETED' && (
+            <Link to={`/services/${id}/live`} className="w-full md:w-auto px-6 py-2 bg-white hover:bg-zinc-200 text-black rounded-xl shadow-lg shadow-white/5 transition-all font-bold flex items-center justify-center">
+              Go Live
+            </Link>
+          )}
         </div>
       </header>
 
@@ -207,7 +242,7 @@ function ServicePlanner() {
             {user?.id === service?.userId && (
               <button
                 onClick={() => setIsSongModalOpen(true)}
-                disabled={addItemMutation.isPending}
+                disabled={addItemMutation.isPending || service?.status === 'COMPLETED'}
                 className="flex items-center gap-1 text-zinc-300 hover:text-white bg-zinc-900 px-3 py-1.5 rounded-full text-xs font-bold transition-all disabled:opacity-50"
               >
                 <Plus size={14} />
@@ -327,7 +362,7 @@ function ServicePlanner() {
                   onChange={(e) => setSelectedUserId(e.target.value)}
                   className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
                 >
-                  {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
                 </select>
                 <select
                   value={selectedRole}
@@ -335,14 +370,13 @@ function ServicePlanner() {
                   className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
                 >
                   <option value="Worship Leader">Worship Leader</option>
-                  <option value="Vocalist">Vocalist</option>
                   <option value="Guitarist">Guitarist</option>
                   <option value="Bassist">Bassist</option>
-                  <option value="Keyboardist">Keyboardist</option>
+                  <option value="Pianist">Pianist</option>
                   <option value="Drummer">Drummer</option>
-                  <option value="Beatbox">Beatbox</option>
-                  <option value="Organ">Organ</option>
-                  <option value="Media/Sound">Media/Sound</option>
+                  <option value="Back up">Back up</option>
+                  <option value="Tambourine">Tambourine</option>
+                  <option value="Media Team">Media Team</option>
                 </select>
                 <button
                   onClick={handleAssign}
@@ -359,10 +393,10 @@ function ServicePlanner() {
                 service.lineup.map((member) => (
                   <div key={member.id} className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-black border border-zinc-800 flex items-center justify-center font-bold text-zinc-300">
-                      {member.user?.name?.[0]}
+                      {member.user?.firstName?.[0]}{member.user?.lastName?.[0]}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{member.user?.name}</p>
+                      <p className="text-sm font-bold text-white">{member.user?.firstName} {member.user?.lastName}</p>
                       <p className="text-xs text-zinc-500">{member.role}</p>
                     </div>
                     <div className={`ml-auto px-2 py-1 rounded text-[10px] font-bold ${member.status === 'ACCEPTED' ? 'bg-zinc-100/10 text-zinc-300' : 'bg-zinc-100/10 text-zinc-300'
@@ -510,7 +544,7 @@ function ServicePlanner() {
             <div>
               <h3 className="text-xl font-bold text-white mb-2">Remove Team Member?</h3>
               <p className="text-sm text-zinc-400">
-                Are you sure you want to remove <span className="text-white font-bold">{memberToRemove.user?.name}</span> from the lineup? They will no longer be assigned as {memberToRemove.role}.
+                Are you sure you want to remove <span className="text-white font-bold">{memberToRemove.user?.firstName} {memberToRemove.user?.lastName}</span> from the lineup? They will no longer be assigned as {memberToRemove.role}.
               </p>
             </div>
             
