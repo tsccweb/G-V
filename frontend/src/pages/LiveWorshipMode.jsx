@@ -748,42 +748,47 @@ function ChordSheetRenderer({ lyrics: rawLyrics, transpose, fontSize, isSlide, s
 function getTransposableLyrics(raw, amount) {
   if (!raw) return '';
   const normalized = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const isChord = (w) => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w);
+  const chordRegex = /([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/g;
 
   return normalized.split('\n').map(line => {
-    const trimmed = line.trim();
-    if (!trimmed) return line;
-    const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+    // If the line is already a ChordPro line (has brackets), we handle it differently or skip it
+    // because ChordSheetRenderer already handles global transposition for ChordPro.
+    if (line.includes('[') && line.includes(']')) return line;
 
-    if (words.length > 0 && words.every(isChord)) {
-      if (amount === 0) return line.replace(/([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi, '[$1]');
+    // Detect if this line likely contains chords
+    const words = line.trim().split(/\s+/).filter(w => w.length > 0);
+    const isChord = (w) => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w);
+    const hasChords = words.some(isChord);
 
-      const regex = /([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi;
-      const matches = [];
-      let m;
-      while ((m = regex.exec(line)) !== null) {
-        matches.push({ chord: m[0], index: m.index });
-      }
+    if (!hasChords) return line;
 
-      let offset = 0;
-      let newLine = line;
+    // We use a manual replacement approach to preserve spacing exactly
+    let newLine = line;
+    let offset = 0;
+    let match;
 
-      matches.forEach(({ chord, index }) => {
-        const newChord = transposeChord(chord, amount);
-        const wrapped = '[' + newChord + ']';
+    // We must use a new regex instance for each line or reset lastIndex
+    const lineRegex = new RegExp(chordRegex);
+    while ((match = lineRegex.exec(line)) !== null) {
+      const chord = match[0];
+      const index = match.index;
+      
+      // Verify this is a standalone word (chord) and not part of a word
+      const charBefore = index > 0 ? line[index - 1] : ' ';
+      const charAfter = index + chord.length < line.length ? line[index + chord.length] : ' ';
+      
+      if (/\s/.test(charBefore) && (/\s/.test(charAfter) || charAfter === '/')) {
+        const transposed = transposeChord(chord, amount);
+        const wrapped = `[${transposed}]`;
         
-        // We replace the chord with the bracketed version
-        // Pre-calculating padding is not needed if we are going into ChordProParser next,
-        // but we want to maintain the relative visual position if possible.
         const before = newLine.substring(0, index + offset);
         const after = newLine.substring(index + offset + chord.length);
         
         newLine = before + wrapped + after;
         offset += (wrapped.length - chord.length);
-      });
-      return newLine;
+      }
     }
-    return line;
+    return newLine;
   }).join('\n');
 }
 
