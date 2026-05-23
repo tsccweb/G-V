@@ -40,10 +40,19 @@ function ServiceList() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const todayServices = activeServices.filter(s => {
+    const serviceDate = new Date(s.date);
+    serviceDate.setHours(0, 0, 0, 0);
+    return serviceDate.getTime() === today.getTime();
+  });
+
   const upcoming = activeServices.filter(s => {
     const serviceDate = new Date(s.date);
     serviceDate.setHours(0, 0, 0, 0);
-    return serviceDate >= today;
+    return serviceDate >= tomorrow;
   });
 
   const past = activeServices.filter(s => {
@@ -195,7 +204,7 @@ function ServiceList() {
             }`}
           >
             <Clock size={16} />
-            <span>{view === 'active' ? 'History' : 'Back to Active'}</span>
+            {view === 'history' && <span>Back to Active</span>}
           </button>
         </div>
 
@@ -204,6 +213,10 @@ function ServiceList() {
           <div className="flex-1 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-center">
             <p className="text-2xl font-black text-white">{services?.length || 0}</p>
             <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500 mt-1">Total</p>
+          </div>
+          <div className="flex-1 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-center">
+            <p className="text-2xl font-black text-amber-400">{todayServices.length}</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500 mt-1">Today</p>
           </div>
           <div className="flex-1 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-center">
             <p className="text-2xl font-black text-emerald-400">{upcoming.length}</p>
@@ -219,11 +232,26 @@ function ServiceList() {
       {/* Conditional Content */}
       {view === 'active' ? (
         <>
+          {/* Today's Services */}
+          {todayServices.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-amber-500 flex items-center gap-2">
+                <Sparkles size={14} className="text-amber-500" />
+                Today
+              </h2>
+              <div className="space-y-3">
+                {todayServices.map(service => (
+                  <ServiceCard key={service.id} service={service} isPast={false} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Upcoming Services */}
           {upcoming.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500 flex items-center gap-2">
-                <Sparkles size={14} className="text-emerald-400" />
+                <Calendar size={14} className="text-emerald-400" />
                 Upcoming
               </h2>
               <div className="space-y-3">

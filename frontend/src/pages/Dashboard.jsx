@@ -198,8 +198,18 @@ function Dashboard() {
             <h2 className={`text-3xl font-black tracking-tighter uppercase mb-2 ${user?.plan === 'FREE' ? 'text-zinc-600' : 'text-black'}`}>
               {user?.plan === 'FREE' ? 'Go Premium' : 'Start Worship'}
             </h2>
-            <p className="text-zinc-500 font-bold text-sm">
-              {user?.plan === 'FREE' ? 'Unlock full planning & live tools' : (nextService ? `Next: ${nextService.title}` : 'Ready for duty')}
+            <p className={`font-bold text-sm ${
+              nextService && new Date(nextService.date).setHours(0,0,0,0) === today.getTime() 
+                ? 'text-amber-500/80' 
+                : 'text-zinc-500'
+            }`}>
+              {user?.plan === 'FREE' 
+                ? 'Unlock full planning & live tools' 
+                : (nextService 
+                    ? (new Date(nextService.date).setHours(0,0,0,0) === today.getTime() 
+                        ? `Today: ${nextService.title}` 
+                        : `Next: ${nextService.title}`)
+                    : 'Ready for duty')}
             </p>
           </div>
         </button>

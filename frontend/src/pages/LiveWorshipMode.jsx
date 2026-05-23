@@ -141,30 +141,36 @@ function LiveWorshipMode() {
   const activeSlide = slides[currentSlideIndex];
   
   // Calculate initial transposition when song changes
+  const originalKey = useMemo(() => {
+    const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+    const getNormKey = (k) => {
+      if (!k) return null;
+      let nk = k.split(' ')[0];
+      if (flatMap[nk]) nk = flatMap[nk];
+      return nk;
+    };
+
+    const guessed = guessOriginalKey(currentItem?.song?.lyrics);
+    const metadata = getNormKey(currentItem?.song?.key);
+    return guessed || metadata || 'C';
+  }, [currentItem]);
+
   useEffect(() => {
     const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
-    
     const getNormKey = (k) => {
+      const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
       if (!k) return null;
       let nk = k.split(' ')[0]; 
       if (flatMap[nk]) nk = flatMap[nk];
       return nk;
     };
 
-    const guessedKey = guessOriginalKey(currentItem?.song?.lyrics);
-    const metadataKey = getNormKey(currentItem?.song?.key);
-    
-    // Always prioritize the actual chords found in the lyrics as the source of truth for transposition
-    const originalKey = guessedKey || metadataKey;
     const targetKey = getNormKey(currentItem?.key);
 
     console.log('[LiveWorship] Transpose Calc:', {
       songTitle: currentItem?.song?.title,
       originalKey,
       targetKey,
-      rawSongKey: currentItem?.song?.key,
-      rawItemKey: currentItem?.key
     });
 
     if (originalKey && targetKey) {
@@ -182,7 +188,7 @@ function LiveWorshipMode() {
     } else {
       setTranspose(0);
     }
-  }, [currentIndex, currentItem]);
+  }, [currentIndex, currentItem, originalKey]);
 
   // Section Jump Buttons (Unique sections in current song)
   const sections = useMemo(() => {
@@ -355,6 +361,9 @@ function LiveWorshipMode() {
               <span className="shrink-0 px-1.5 py-0.5 bg-white/10 rounded-md text-[8px] md:text-[9px] font-black tracking-tight text-zinc-400 uppercase">
                 {currentIndex + 1} / {items.length}
               </span>
+              <span className="shrink-0 px-1.5 py-0.5 bg-amber-500 text-black rounded-md text-[8px] md:text-[9px] font-black tracking-tight uppercase">
+                {transposeChord(originalKey, transpose)}
+              </span>
               <p className="text-[9px] md:text-[10px] font-bold text-zinc-600 uppercase tracking-widest truncate">{flow?.title || 'Live Worship'}</p>
             </div>
           </div>
@@ -457,7 +466,7 @@ function LiveWorshipMode() {
                 <div className="flex items-center gap-2 bg-black/50 p-1 rounded-xl border border-white/5">
                   <button onClick={() => setTranspose(t => (t - 1 + 12) % 12)} className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-lg text-sm font-black text-blue-400">♭</button>
                   <span className="text-sm font-black text-white min-w-[2rem] text-center">
-                    {transposeChord(guessOriginalKey(currentItem?.song?.lyrics) || currentItem?.song?.key || 'C', transpose)}
+                    {transposeChord(originalKey, transpose)}
                   </span>
                   <button onClick={() => setTranspose(t => (t + 1) % 12)} className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-lg text-sm font-black text-blue-400">♯</button>
                 </div>
@@ -624,7 +633,9 @@ function LiveWorshipMode() {
                   <span className="text-[10px] font-black opacity-30">{idx + 1}</span>
                   <div className="flex-1 truncate">
                     <p className="font-black uppercase tracking-tight text-sm truncate">{item.song?.title || item.title}</p>
-                    <p className={`text-[10px] font-bold mt-0.5 ${currentIndex === idx ? 'text-black/50' : 'text-zinc-600'}`}>{item.song?.key || 'KEY ?'} · {item.type || 'SONG'}</p>
+                    <p className={`text-[10px] font-bold mt-0.5 ${currentIndex === idx ? 'text-black/50' : 'text-zinc-600'}`}>
+                      {item.key || item.song?.key || 'KEY ?'} · {item.type || 'SONG'}
+                    </p>
                   </div>
                   {currentIndex === idx && <Play size={16} className="fill-black" />}
                 </button>
