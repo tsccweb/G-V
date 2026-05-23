@@ -152,7 +152,11 @@ function LiveWorshipMode() {
       return nk;
     };
 
-    const originalKey = getNormKey(currentItem?.song?.key) || guessOriginalKey(currentItem?.song?.lyrics);
+    const guessedKey = guessOriginalKey(currentItem?.song?.lyrics);
+    const metadataKey = getNormKey(currentItem?.song?.key);
+    
+    // Always prioritize the actual chords found in the lyrics as the source of truth for transposition
+    const originalKey = guessedKey || metadataKey;
     const targetKey = getNormKey(currentItem?.key);
 
     console.log('[LiveWorship] Transpose Calc:', {
@@ -453,7 +457,7 @@ function LiveWorshipMode() {
                 <div className="flex items-center gap-2 bg-black/50 p-1 rounded-xl border border-white/5">
                   <button onClick={() => setTranspose(t => (t - 1 + 12) % 12)} className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-lg text-sm font-black text-blue-400">♭</button>
                   <span className="text-sm font-black text-white min-w-[2rem] text-center">
-                    {transposeChord(currentItem?.song?.key || guessOriginalKey(currentItem?.song?.lyrics) || 'C', transpose)}
+                    {transposeChord(guessOriginalKey(currentItem?.song?.lyrics) || currentItem?.song?.key || 'C', transpose)}
                   </span>
                   <button onClick={() => setTranspose(t => (t + 1) % 12)} className="w-9 h-9 flex items-center justify-center hover:bg-white/10 rounded-lg text-sm font-black text-blue-400">♯</button>
                 </div>

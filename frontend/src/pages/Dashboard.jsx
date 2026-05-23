@@ -44,7 +44,14 @@ function Dashboard() {
     queryFn: getSongs
   });
 
-  const nextService = services?.find(s => new Date(s.date) >= new Date());
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextService = services?.sort((a, b) => new Date(a.date) - new Date(b.date))
+    .find(s => {
+      const serviceDate = new Date(s.date);
+      serviceDate.setHours(0, 0, 0, 0);
+      return serviceDate >= today;
+    });
 
   const formattedDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',

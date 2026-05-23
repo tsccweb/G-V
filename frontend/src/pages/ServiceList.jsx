@@ -37,8 +37,20 @@ function ServiceList() {
   const activeServices = services?.filter(s => s.status !== 'COMPLETED') || [];
   const historyServices = services?.filter(s => s.status === 'COMPLETED') || [];
 
-  const upcoming = activeServices.filter(s => new Date(s.date) >= new Date());
-  const past = activeServices.filter(s => new Date(s.date) < new Date());
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcoming = activeServices.filter(s => {
+    const serviceDate = new Date(s.date);
+    serviceDate.setHours(0, 0, 0, 0);
+    return serviceDate >= today;
+  });
+
+  const past = activeServices.filter(s => {
+    const serviceDate = new Date(s.date);
+    serviceDate.setHours(0, 0, 0, 0);
+    return serviceDate < today;
+  });
   const totalMembers = services?.reduce((sum, s) => sum + (s.lineup?.length || 0), 0) || 0;
 
   const ServiceCard = ({ service, isPast }) => {

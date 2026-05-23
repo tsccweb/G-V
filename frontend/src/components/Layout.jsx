@@ -96,7 +96,7 @@ function Layout({ children }) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-[100dvh] relative bg-black">
-        <main className="flex-1 overflow-y-auto w-full pb-20 md:pb-0">
+        <main className="flex-1 overflow-y-auto w-full pb-24 lg:pb-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
