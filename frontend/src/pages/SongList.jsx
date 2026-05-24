@@ -11,7 +11,7 @@ function SongList() {
   const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState(null);
-  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'list'
+  const [viewMode, setViewMode] = useState('list'); // 'cards' or 'list'
   const deferredQuery = useDeferredValue(searchQuery);
 
   const { data: songs, isLoading, error } = useQuery({
