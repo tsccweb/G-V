@@ -29,8 +29,20 @@ function ServicePlanner() {
   const { user } = useAuthStore();
   const { data: service, isLoading, error } = useQuery({
     queryKey: ['services', id],
-    queryFn: () => getServiceById(id)
+    queryFn: () => getServiceById(id),
+    enabled: !!id
   });
+
+  if (!id) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-8 text-center text-zinc-400">
+        <div>
+          <p className="text-xl font-bold text-white">Service not found.</p>
+          <p className="mt-2 text-sm text-zinc-500">Please open this page from a valid service link.</p>
+        </div>
+      </div>
+    );
+  }
 
   const [items, setItems] = useState([]);
   const [users, setUsers] = useState([]);

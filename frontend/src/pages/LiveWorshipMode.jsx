@@ -63,6 +63,7 @@ function LiveWorshipMode() {
       if (window.location.pathname.includes('/services/')) return getServiceById(id);
       return getFlowById(id);
     },
+    enabled: !!id,
     refetchInterval: isHosting ? false : 2000,
     retry: false
   });
