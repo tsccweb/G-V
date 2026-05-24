@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, Check, Trash2, Loader2, Info, UserPlus, ShieldAlert } from 'lucide-react';
+import { Bell, Loader2, Info, UserPlus, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '../services/notificationService';
 import { formatDistanceToNow } from 'date-fns';

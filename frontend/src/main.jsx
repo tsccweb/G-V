@@ -6,17 +6,15 @@ import { registerSW } from 'virtual:pwa-register'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 
 // Register Service Worker and handle updates
-const updateSW = registerSW({
+registerSW({
   onNeedRefresh() {
-    console.log('New content available, click to refresh');
     if ('setAppBadge' in navigator) {
       navigator.setAppBadge(1).catch(() => {});
     }
   },
   onOfflineReady() {
-    console.log('App ready for offline use');
   },
-})
+});
 
 const GOOGLE_CLIENT_ID = '687528189146-64gpt46kkdipv6rcdeclrn9cuepnqaoj.apps.googleusercontent.com'
 

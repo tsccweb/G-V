@@ -6,10 +6,8 @@ import { getSettings } from '../services/settingsService';
 import { getServiceById, goLiveService } from '../services/serviceService';
 import useAuthStore from '../store/authStore';
 import {
-  ChevronLeft, Play, FastForward, RotateCcw, X, Settings2, Plus,
-  Trash2, Upload, Minus, List, History, Pause, AlignLeft, Eye,
-  Radio, Share2, Music, Type, Palette, Gauge, ArrowLeft, Maximize2,
-  Copy, CheckCircle2, ChevronRight, Sliders, Settings
+  ChevronLeft, Play, X, List, Pause, Radio, Share2,
+  Type, ArrowLeft, Copy, CheckCircle2, ChevronRight, Sliders, Settings
 } from 'lucide-react';
 import ChordSheetJS from 'chordsheetjs';
 
@@ -76,7 +74,7 @@ function LiveWorshipMode() {
   const flow = session?.worshipFlow || session?.service || session;
   const sessionCode = session?.sessionCode || session?.liveSession?.sessionCode;
   const liveSessionId = session?.liveSession?.id || (session?.sessionCode ? session?.id : null);
-  const items = flow?.songs || flow?.items || [];
+  const items = useMemo(() => flow?.songs || flow?.items || [], [flow]);
   const currentItem = items[currentIndex];
 
   // Role Logic — grant leader view to service/flow owners + elevated roles
@@ -98,7 +96,7 @@ function LiveWorshipMode() {
         goLiveMutation.mutate();
       }
     }
-  }, [viewType, session, isHosting, sessionCode, goLiveMutation.isPending, goLiveMutation.isSuccess]);
+  }, [viewType, session, isHosting, sessionCode, goLiveMutation.isPending, goLiveMutation.isSuccess, goLiveMutation]);
 
   // Content Parsing (Split by Section Header for accurate labeling)
   const slides = useMemo(() => {
@@ -125,7 +123,7 @@ function LiveWorshipMode() {
           result.push(currentPart);
         }
         // Start a new part with this header
-        currentPart = { label: part.replace(/[\[\]]/g, '').toUpperCase(), raw: '', content: '' };
+        currentPart = { label: part.slice(1, -1).toUpperCase(), raw: '', content: '' };
       } else {
         currentPart.raw += part;
       }
@@ -139,8 +137,6 @@ function LiveWorshipMode() {
     return result;
   }, [currentItem]);
 
-  const activeSlide = slides[currentSlideIndex];
-  
   // Calculate initial transposition when song changes
   const originalKey = useMemo(() => {
     const flatMap = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
@@ -172,12 +168,6 @@ function LiveWorshipMode() {
 
     const targetKey = getNormKey(currentItem?.key);
 
-    console.log('[LiveWorship] Transpose Calc:', {
-      songTitle: currentItem?.song?.title,
-      originalKey,
-      targetKey,
-    });
-
     if (originalKey && targetKey) {
       const fromIdx = keys.indexOf(originalKey);
       const toIdx = keys.indexOf(targetKey);
@@ -185,7 +175,6 @@ function LiveWorshipMode() {
       if (fromIdx !== -1 && toIdx !== -1) {
         let diff = (toIdx - fromIdx) % 12;
         while (diff < 0) diff += 12;
-        console.log('[LiveWorship] Setting Transpose:', diff);
         setTranspose(diff);
       } else {
         setTranspose(0);
@@ -221,7 +210,7 @@ function LiveWorshipMode() {
         transpose, // Send current transposition to followers
       });
     }
-  }, [currentIndex, currentSlideIndex, isPaused, isHosting]);
+  }, [currentIndex, currentSlideIndex, isPaused, isHosting, items, liveSessionId, syncMutation, transpose]);
 
   // Follower Sync Effect
   useEffect(() => {
@@ -236,7 +225,7 @@ function LiveWorshipMode() {
         }
       }
     }
-  }, [session, isHosting]);
+  }, [session, isHosting, items]);
 
   // Auto-Scroll Logic (Smooth requestAnimationFrame version)
   useEffect(() => {
@@ -266,22 +255,6 @@ function LiveWorshipMode() {
   }, [isPaused, scrollSpeed]);
 
   // Handlers
-  const handleNextSlide = () => {
-    if (currentSlideIndex < slides.length - 1) {
-      setCurrentSlideIndex(prev => prev + 1);
-    } else {
-      handleNextSong();
-    }
-  };
-
-  const handlePrevSlide = () => {
-    if (currentSlideIndex > 0) {
-      setCurrentSlideIndex(prev => prev - 1);
-    } else {
-      handlePrevSong();
-    }
-  };
-
   const handleNextSong = () => {
     if (currentIndex < items.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -731,7 +704,7 @@ function ChordSheetRenderer({ lyrics: rawLyrics, transpose, fontSize, isSlide, s
         return line;
       }).join('\n');
     } catch (err) {
-      console.error('Chord parsing error:', err);
+      void err;
       return rawLyrics;
     }
   }, [rawLyrics, transpose]);

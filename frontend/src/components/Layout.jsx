@@ -1,13 +1,11 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Music, Home, Calendar, Users, Settings, LogOut, Menu, X, Lock, LayoutList, AlertTriangle, Bell } from 'lucide-react';
-import NotificationTray from './NotificationTray';
+import { Music, Home, Calendar, Users, Settings, LogOut, Lock, LayoutList, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 
 function Layout({ children }) {
   const { user, logout } = useAuthStore();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();

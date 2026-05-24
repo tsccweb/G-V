@@ -14,7 +14,6 @@ function Settings() {
       setUser(updatedUser);
       import('react-hot-toast').then(({ toast }) => toast.success('Role updated to ' + newRole.replace('_', ' ')));
     } catch (err) {
-      console.error(err);
       import('react-hot-toast').then(({ toast }) => toast.error('Failed to update role'));
     } finally {
       setIsUpdating(false);

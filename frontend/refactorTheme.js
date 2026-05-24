@@ -72,11 +72,9 @@ function processDirectory(dir) {
 
       if (content !== originalContent) {
         fs.writeFileSync(fullPath, content, 'utf8');
-        console.log(`Updated ${fullPath}`);
       }
     }
   }
 }
 
 processDirectory(directory);
-console.log('Complete');

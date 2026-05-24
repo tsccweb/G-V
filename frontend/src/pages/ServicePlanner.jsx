@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getServiceById,
@@ -7,7 +7,6 @@ import {
   addToLineup,
   addServiceItem,
   removeServiceItem,
-  deleteService,
   removeFromLineup,
   updateServiceStatus
 } from '../services/serviceService';
@@ -15,20 +14,16 @@ import { getSongs } from '../services/songService';
 import { getGroups, getGroupById } from '../services/groupService';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
-  Info, GripVertical, Check, X, Trash2, Search, AlertTriangle,
-  ChevronLeft, Plus, Music, MessageSquare, BookOpen, Users, Send, MoreVertical
+  Info, GripVertical, Check, X, Trash2, Search,
+  ChevronLeft, Plus, Music, MessageSquare, BookOpen, Users, MoreVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 function ServicePlanner() {
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { data: service, isLoading, error } = useQuery({
     queryKey: ['services', id],
@@ -40,17 +35,6 @@ function ServicePlanner() {
     queryFn: getSongs,
     enabled: !!user
   });
-
-  if (!id) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center p-8 text-center text-zinc-400">
-        <div>
-          <p className="text-xl font-bold text-white">Service not found.</p>
-          <p className="mt-2 text-sm text-zinc-500">Please open this page from a valid service link.</p>
-        </div>
-      </div>
-    );
-  }
 
   const [items, setItems] = useState([]);
   const [isAssigning, setIsAssigning] = useState(false);
@@ -86,7 +70,7 @@ function ServicePlanner() {
       });
       setMemberRoles(defaultRoles);
     }
-  }, [selectedGroupDetails]);
+  }, [selectedGroupDetails, memberRoles]);
 
   useEffect(() => {
     if (service?.items) {
@@ -141,7 +125,6 @@ function ServicePlanner() {
       setSelectedGroupMemberIds([]);
       toast.success('Selected group members added to service.');
     } catch (err) {
-      console.error(err);
       toast.error('Failed to add group members.');
     }
   };
@@ -175,20 +158,6 @@ function ServicePlanner() {
     }
   });
 
-  const handleRemoveItem = (itemId) => {
-    if (confirm('Are you sure you want to remove this item from the worship flow?')) {
-      removeItemMutation.mutate(itemId);
-    }
-  };
-
-  const deleteMutation = useMutation({
-    mutationFn: () => deleteService(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
-      navigate('/services');
-    }
-  });
-
   const statusMutation = useMutation({
     mutationFn: (status) => updateServiceStatus(id, status),
     onSuccess: () => {
@@ -197,11 +166,16 @@ function ServicePlanner() {
     }
   });
 
-  const handleDeleteService = () => {
-    if (confirm('CRITICAL: Are you sure you want to delete this ENTIRE service? This will remove all worship flow items and lineups. This action cannot be undone.')) {
-      deleteMutation.mutate();
-    }
-  };
+  if (!id) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-8 text-center text-zinc-400">
+        <div>
+          <p className="text-xl font-bold text-white">Service not found.</p>
+          <p className="mt-2 text-sm text-zinc-500">Please open this page from a valid service link.</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleFinishService = () => {
     setShowFinishModal(true);

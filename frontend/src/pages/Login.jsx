@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleLogin } from '@react-oauth/google';
-import { Mail, Lock, ArrowRight, Github, Chrome, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Chrome, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 
 function Login() {
@@ -10,7 +11,6 @@ function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login, googleLogin, isLoading, error } = useAuthStore();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +21,7 @@ function Login() {
     onSuccess: (codeResponse) => {
       googleLogin({ accessToken: codeResponse.access_token });
     },
-    onError: (error) => console.log('Login Failed:', error)
+    onError: () => toast.error('Login failed. Please try again.')
   });
 
   return (

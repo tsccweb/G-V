@@ -32,7 +32,7 @@ function JoinSession() {
       setCode(urlCode);
       joinMutation.mutate(urlCode);
     }
-  }, [searchParams]);
+  }, [searchParams, joinMutation]);
 
   // Extract 6-digit code from scanned text
   const extractCode = (text) => {
@@ -41,7 +41,10 @@ function JoinSession() {
       const url = new URL(text);
       const codeParam = url.searchParams.get('code');
       if (codeParam && /^\d{6}$/.test(codeParam)) return codeParam;
-    } catch {}
+    } catch (err) {
+      // ignore invalid URL parse
+      void err;
+    }
     // Check if the text itself is 6 digits
     const match = text.match(/(\d{6})/);
     return match ? match[1] : null;
@@ -76,10 +79,9 @@ function JoinSession() {
             joinMutation.mutate(sessionCode);
           }
         },
-        () => {} // Ignore scan failures
+        () => { /* scan failure ignored */ }
       );
     } catch (err) {
-      console.error('Scanner error:', err);
       setScannerError('Could not access camera. Please allow camera permissions.');
       setScannerOpen(false);
     }
@@ -91,7 +93,9 @@ function JoinSession() {
       try {
         await html5QrCodeRef.current.stop();
         html5QrCodeRef.current.clear();
-      } catch {}
+      } catch (err) {
+        // ignore stop error
+      }
       html5QrCodeRef.current = null;
     }
     setScannerOpen(false);
@@ -101,7 +105,9 @@ function JoinSession() {
   useEffect(() => {
     return () => {
       if (html5QrCodeRef.current) {
-        try { html5QrCodeRef.current.stop(); } catch {}
+        try { html5QrCodeRef.current.stop(); } catch (err) {
+          // ignore cleanup failure
+        }
       }
     };
   }, []);

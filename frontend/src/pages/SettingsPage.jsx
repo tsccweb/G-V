@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSettings, updateSettings, resetSettings } from '../services/settingsService';
 import { updateProfile, changePassword } from '../services/authService';
 import { getPendingRequest } from '../services/subscriptionService';
-import { LogOut, User, Plus, Globe, Crown, Lock, Eye, EyeOff, X, ChevronRight, Paintbrush, KeyRound, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { LogOut, User, Plus, Globe, Crown, Eye, EyeOff, ChevronRight, Paintbrush, KeyRound, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
@@ -140,6 +140,8 @@ export default function SettingsPage() {
   const set = (k, v) => setLs(p => ({ ...p, [k]: v }));
   const saveAll = () => {
     const { id, userId, ...d } = ls;
+    void id;
+    void userId;
     saveMut.mutate(d, {
       onSuccess: () => {
         setSaveMsg('Changes saved ✓');

@@ -1,7 +1,7 @@
 import { useState, useDeferredValue } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getSongs } from '../services/songService';
-import { Music, Plus, Search, Hash, Lock, AlertCircle, LayoutGrid, List } from 'lucide-react';
+import { Music, Plus, Search, Lock, AlertCircle, LayoutGrid, List } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
@@ -91,7 +91,7 @@ function SongList() {
             <div className="flex-1">
               <h3 className="text-lg font-black text-white italic tracking-tight">Song Limit Reached (7/7)</h3>
               <p className="text-zinc-400 text-sm mt-1">
-                You've hit the maximum capacity for the FREE plan. Upgrade to <span className="text-white font-bold">Standard</span> for unlimited songs!
+                You have hit the maximum capacity for the FREE plan. Upgrade to <span className="text-white font-bold">Standard</span> for unlimited songs!
               </p>
             </div>
           </div>

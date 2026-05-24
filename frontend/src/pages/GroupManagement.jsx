@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Users, Plus, Trash2, X, Search, UserPlus, 
-  ChevronRight, Settings2, Info, CheckCircle2,
+  Settings2, Info, CheckCircle2,
   ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -221,7 +221,7 @@ function GroupManagement() {
                 <div className="w-16 h-16 bg-zinc-900 rotate-12 rounded-3xl flex items-center justify-center mx-auto border border-zinc-800">
                   <Info size={32} className="text-zinc-700" />
                 </div>
-                <p className="text-zinc-500 font-medium max-w-xs mx-auto">You haven't created any groups yet. Start by creating your first ministry group.</p>
+                <p className="text-zinc-500 font-medium max-w-xs mx-auto">You have not created any groups yet. Start by creating your first ministry group.</p>
               </div>
             )}
           </div>

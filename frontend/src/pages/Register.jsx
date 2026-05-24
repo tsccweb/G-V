@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleLogin } from '@react-oauth/google';
-import { UserPlus, Eye, EyeOff, Mail, Phone, User, Shield, ArrowRight, Chrome, AlertCircle, Gift } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Chrome, AlertCircle, Gift } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
@@ -42,7 +42,7 @@ function Register() {
     onSuccess: (codeResponse) => {
       googleLogin({ accessToken: codeResponse.access_token });
     },
-    onError: (error) => console.log('Registration Failed:', error)
+    onError: () => toast.error('Registration failed. Please try again.')
   });
 
   const roles = [

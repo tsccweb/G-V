@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getServices, deleteService } from '../services/serviceService';
-import { Calendar, Plus, Users, ChevronRight, Trash2, Clock, Music, Sparkles, MoreVertical, Check } from 'lucide-react';
+import { Calendar, Plus, Users, ChevronRight, Trash2, Clock, Sparkles, MoreVertical, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -277,7 +277,7 @@ function ServiceList() {
             </div>
           )}
 
-          {activeServices.length === 0 && (
+          {activeServices.length === 0 && services?.length > 0 && (
             <div className="rounded-2xl border border-dashed border-zinc-800 p-12 text-center">
               <Calendar className="mx-auto mb-4 text-zinc-700" size={48} />
               <h3 className="text-xl font-bold text-white mb-2">No active services</h3>

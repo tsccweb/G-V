@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getSongById, deleteSong } from '../services/songService';
 import { getSettings } from '../services/settingsService';
-import { ChevronLeft, Edit, Clock, Tag as TagIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, Edit, Clock, Trash2 } from 'lucide-react';
 import ChordSheetJS from 'chordsheetjs';
 
 function SongDetail() {
@@ -11,7 +11,6 @@ function SongDetail() {
   const [activeSection, setActiveSection] = useState(null);
   const [transpose, setTranspose] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
-  const [scrollSpeed, setScrollSpeed] = useState(2);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -124,9 +123,9 @@ function SongDetail() {
     let currentSection = null;
 
     lines.forEach((line, idx) => {
-      const sectionMatch = line.match(/^\[(Verse|Chorus|Bridge|Intro|Outro|Tag|Refrain|Instrumental).*?\]/i);
-      if (sectionMatch) {
-        currentSection = sectionMatch[0].replace(/[\[\]]/g, '').toUpperCase();
+      const isSection = line.startsWith('[') && /^(?:Verse|Chorus|Bridge|Intro|Outro|Tag|Refrain|Instrumental).*?]/i.test(line.slice(1));
+      if (isSection) {
+        currentSection = line.slice(1, -1).toUpperCase();
         processed.push({ type: 'header', content: currentSection, id: `section-${idx}` });
       } else if (line.trim()) {
         processed.push({ type: 'line', content: line });
@@ -154,11 +153,11 @@ function SongDetail() {
   // Custom Highlighter that preserves spacing
   const highlighted = rawText.split('\n').map(line => {
     // Detect if the line is a section header (comment)
-    if (line.match(/^\[(Verse|Chorus|Bridge|Intro|Outro|Tag|Refrain|Instrumental).*?\]/i)) {
-      return `<div class="comment">${line.replace(/[\[\]]/g, '')}</div>`;
+    if (line[0] === '[' && /^(?:Verse|Chorus|Bridge|Intro|Outro|Tag|Refrain|Instrumental).*?]/i.test(line.slice(1))) {
+      return `<div class="comment">${line.replace(/[[\]]/g, '')}</div>`;
     }
     // Highlight chords by wrapping them in spans without changing length
-    return line.replace(/\[(.*?)\]/g, '<span class="chord">$1</span>');
+    return line.replace(/[[]([^\]]*?)]/g, '<span class="chord">$1</span>');
   }).join('\n');
 
   return (

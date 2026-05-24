@@ -1,0 +1,464 @@
+   5:   getServiceById,
+   6:   updateServiceItems,
+   7:   addToLineup,
+   8:   addServiceItem,
+   9:   removeServiceItem,
+  10:   deleteService,
+  11:   removeFromLineup,
+  12:   updateServiceStatus
+  18:   Info, GripVertical, Check, X, Trash2, Search, AlertTriangle,
+  19:   ChevronLeft, Plus, Music, MessageSquare, BookOpen, Users, Send, MoreVertical
+  22: import toast from 'react-hot-toast';
+  23: import useAuthStore from '../store/authStore';
+  24: 
+  27:   const queryClient = useQueryClient();
+  28:   const navigate = useNavigate();
+  31:     queryKey: ['services', id],
+  32:     queryFn: () => getServiceById(id),
+  33:     enabled: !!id
+  36:     queryKey: ['songs'],
+  37:     queryFn: getSongs,
+  38:     enabled: !!user
+  40: 
+  41:   const [items, setItems] = useState([]);
+  42:   const [isAssigning, setIsAssigning] = useState(false);
+  43:   const [selectedGroupId, setSelectedGroupId] = useState('');
+  44:   const [selectedGroupMemberIds, setSelectedGroupMemberIds] = useState([]);
+  46:   const [isSongModalOpen, setIsSongModalOpen] = useState(false);
+  47:   const [songSearchQuery, setSongSearchQuery] = useState('');
+  48:   const [selectedSongForFlow, setSelectedSongForFlow] = useState(null);
+  49:   const [selectedKey, setSelectedKey] = useState('');
+  50:   const [memberToRemove, setMemberToRemove] = useState(null);
+  51:   const [showFinishModal, setShowFinishModal] = useState(false);
+  52:   const [openMenuId, setOpenMenuId] = useState(null);
+  53: 
+  55:     queryKey: ['groups'],
+  56:     queryFn: getGroups,
+  57:     enabled: !!user
+  59: 
+  61:     queryKey: ['group', selectedGroupId],
+  62:     queryFn: () => getGroupById(selectedGroupId),
+  63:     enabled: !!selectedGroupId
+  65: 
+  68:       setSelectedGroupMemberIds([]);
+  71:         defaultRoles[member.id] = memberRoles[member.id] || 'MEMBER';
+  73:       setMemberRoles(defaultRoles);
+  76: 
+  79:       setItems(service.items);
+  82: 
+  84:     mutationFn: (newItems) => updateServiceItems(id, newItems),
+  89: 
+  91:     mutationFn: (lineupId) => removeFromLineup(id, lineupId),
+  94:       setMemberToRemove(null);
+  97: 
+  99:     setSelectedGroupMemberIds(prev => prev.includes(memberId)
+ 100:       ? prev.filter(id => id !== memberId)
+ 101:       : [...prev, memberId]
+ 102:     );
+ 104: 
+ 108: 
+ 110:     if (!selectedGroupDetails) return toast.error('Please select a valid group.');
+ 111:     if (selectedGroupMemberIds.length === 0) return toast.error('Select at least one group member.');
+ 112: 
+ 113:     const assignedIds = new Set(service?.lineup?.map(member => member.user?.id).filter(Boolean));
+ 114:     const membersToAdd = selectedGroupDetails.members.filter(member =>
+ 115:       selectedGroupMemberIds.includes(member.id) && !assignedIds.has(member.id)
+ 116:     );
+ 117: 
+ 118:     if (!membersToAdd.length) return toast.error('Selected members are already assigned to this service.');
+ 119: 
+ 122:         serviceId: id,
+ 123:         userId: member.id,
+ 124:         role: memberRoles[member.id] || 'MEMBER'
+ 127:       setSelectedGroupMemberIds([]);
+ 128:       toast.success('Selected group members added to service.');
+ 130:       console.error(err);
+ 131:       toast.error('Failed to add group members.');
+ 134: 
+ 136:     mutationFn: (data) => addServiceItem(id, data),
+ 141: 
+ 144:       title: song.title,
+ 145:       type: 'SONG',
+ 146:       duration: 5,
+ 147:       order: items.length,
+ 148:       songId: song.id,
+ 149:       key: key || song.key || (guessOriginalKey(song.lyrics) || 'C')
+ 151:     setIsSongModalOpen(false);
+ 152:     setSelectedSongForFlow(null);
+ 153:     setSelectedKey('');
+ 154:     setSongSearchQuery('');
+ 156: 
+ 158:     mutationFn: (itemId) => removeServiceItem(id, itemId),
+ 163: 
+ 166:       removeItemMutation.mutate(itemId);
+ 169: 
+ 171:     mutationFn: () => deleteService(id),
+ 174:       navigate('/services');
+ 177: 
+ 179:     mutationFn: (status) => updateServiceStatus(id, status),
+ 185: 
+ 187:     return (
+ 188:       <div className="min-h-[60vh] flex items-center justify-center p-8 text-center text-zinc-400">
+ 189:         <div>
+ 190:           <p className="text-xl font-bold text-white">Service not found.</p>
+ 191:           <p className="mt-2 text-sm text-zinc-500">Please open this page from a valid service link.</p>
+ 192:         </div>
+ 193:       </div>
+ 194:     );
+ 196: 
+ 199:       deleteMutation.mutate();
+ 202: 
+ 204:     setShowFinishModal(true);
+ 206: 
+ 208:     statusMutation.mutate('COMPLETED');
+ 209:     setShowFinishModal(false);
+ 211: 
+ 212: 
+ 214:     if (!result.destination) return;
+ 215: 
+ 216:     const reorderedItems = Array.from(items);
+ 217:     const [removed] = reorderedItems.splice(result.source.index, 1);
+ 218:     reorderedItems.splice(result.destination.index, 0, removed);
+ 219: 
+ 220:     // Update orders
+ 222:       ...item,
+ 223:       order: index
+ 225: 
+ 226:     setItems(updatedItems);
+ 229: 
+ 230:   if (isLoading) return <div className="p-8 text-center text-zinc-400">Loading planner...</div>;
+ 231:   if (error) return <div className="p-8 text-center text-white">Error loading service</div>;
+ 232:   if (!service) return <div className="p-8 text-center text-white">Service not found.</div>;
+ 233: 
+ 243: 
+ 244:   const assignedUserIds = new Set(service?.lineup?.map(member => member.user?.id).filter(Boolean));
+ 245: 
+ 246:   return (
+ 247:     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8">
+ 248:       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+ 249:         <div className="space-y-4">
+ 250:           <Link to="/services" className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm">
+ 252:             <span>Back to Services</span>
+ 253:           </Link>
+ 254:           <div>
+ 256:             <p className="text-zinc-400">
+ 258:             </p>
+ 259:           </div>
+ 260:         </div>
+ 261: 
+ 262:         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+ 264:             <button
+ 267:               className="w-full md:w-auto px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl shadow-lg shadow-emerald-500/10 transition-all font-bold flex items-center justify-center gap-2"
+ 268:             >
+ 270:               <span>Finish Service</span>
+ 271:             </button>
+ 273: 
+ 275:              <div className="px-6 py-2 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-xl font-bold flex items-center justify-center gap-2">
+ 277:                 <span>Completed</span>
+ 278:              </div>
+ 280: 
+ 283:               Go Live
+ 284:             </Link>
+ 286:         </div>
+ 287:       </header>
+ 288: 
+ 289:       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+ 291:         <div className="lg:col-span-2 space-y-4">
+ 292:           <div className="flex items-center justify-between mb-2">
+ 293:             <h2 className="text-xl font-bold text-white uppercase tracking-wider text-sm">Worship Flow</h2>
+ 295:               <button
+ 298:                 className="flex items-center gap-1 text-zinc-300 hover:text-white bg-zinc-900 px-3 py-1.5 rounded-full text-xs font-bold transition-all disabled:opacity-50"
+ 299:               >
+ 301:                 <span>Add Song</span>
+ 302:               </button>
+ 304:           </div>
+ 305: 
+ 313:                         <div
+ 318:                         >
+ 321:                           </div>
+ 322: 
+ 323:                           <div className="p-2 bg-black rounded-lg">
+ 325:                           </div>
+ 326: 
+ 327:                           <div className="flex-1 min-w-0">
+ 328:                             <div className="flex items-center gap-2">
+ 331:                                 <span className="text-[10px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-md border border-zinc-700 font-mono">
+ 333:                                 </span>
+ 335:                             </div>
+ 337:                               <p className="text-xs text-zinc-500 truncate">
+ 339:                               </p>
+ 341:                           </div>
+ 342: 
+ 343:                           <div className="text-right flex items-center gap-4">
+ 346:                               <div className="relative">
+ 347:                                 <button
+ 349:                                     e.stopPropagation();
+ 350:                                     setOpenMenuId(openMenuId === item.id ? null : item.id);
+ 351:                                   }
+ 352:                                   className="p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+ 353:                                 >
+ 355:                                 </button>
+ 356: 
+ 357:                                 <AnimatePresence>
+ 359:                                     <>
+ 360:                                       <div 
+ 361:                                         className="fixed inset-0 z-[60]" 
+ 363:                                       />
+ 364:                                       <motion.div
+ 365:                                         initial={ opacity: 0, scale: 0.95, x: 10 }
+ 366:                                         animate={ opacity: 1, scale: 1, x: 0 }
+ 367:                                         exit={ opacity: 0, scale: 0.95, x: 10 }
+ 368:                                         className="absolute right-0 top-10 w-32 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[70] overflow-hidden"
+ 369:                                       >
+ 370:                                         <button
+ 372:                                             removeItemMutation.mutate(item.id);
+ 373:                                             setOpenMenuId(null);
+ 374:                                           }
+ 375:                                           className="w-full px-4 py-3 text-left text-xs font-bold text-red-400 hover:bg-red-400/10 flex items-center gap-2 transition-colors"
+ 376:                                         >
+ 378:                                           Delete
+ 379:                                         </button>
+ 380:                                       </motion.div>
+ 381:                                     </>
+ 383:                                 </AnimatePresence>
+ 384:                               </div>
+ 386:                           </div>
+ 387:                         </div>
+ 389:                     </Draggable>
+ 392:                 </div>
+ 394:             </Droppable>
+ 395:           </DragDropContext>
+ 396:         </div>
+ 397: 
+ 399:         <div className="space-y-6">
+ 400:           <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl space-y-6 shadow-xl">
+ 401:             <div className="flex items-center justify-between">
+ 402:               <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Group Lineup</h2>
+ 406:                 </button>
+ 408:             </div>
+ 409: 
+ 411:               <div className="p-4 bg-black border border-zinc-800 rounded-2xl space-y-4">
+ 412:                 <div className="space-y-3">
+ 413:                   <label className="text-xs uppercase tracking-[0.2em] text-zinc-500">Select Group</label>
+ 414:                   <select
+ 417:                     className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
+ 418:                   >
+ 419:                     <option value="">Choose a group</option>
+ 423:                   </select>
+ 424:                 </div>
+ 425: 
+ 427:                   <div className="space-y-3">
+ 428:                     <div className="flex items-center justify-between gap-3">
+ 429:                       <div>
+ 430:                         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Group Members</p>
+ 431:                         <p className="text-sm text-zinc-400">Choose members to add to this service lineup.</p>
+ 432:                       </div>
+ 433:                       <button
+ 434:                         type="button"
+ 437:                         className="px-3 py-2 bg-white text-black text-xs font-bold uppercase rounded-lg hover:bg-zinc-200"
+ 438:                       >
+ 439:                         Add Selected Members
+ 440:                       </button>
+ 441:                     </div>
+ 443:                       <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+ 445:                           const isAssigned = assignedUserIds.has(member.id);
+ 446:                           const isSelected = selectedGroupMemberIds.includes(member.id);
+ 447:                           return (
+ 450:                                 <input
+ 451:                                   type="checkbox"
+ 455:                                   className="w-4 h-4 text-white bg-zinc-800 border-zinc-700 rounded"
+ 456:                                 />
+ 457:                                 <div className="min-w-0">
+ 460:                                 </div>
+ 461:                               </label>
+ 462:                               <select
+ 466:                                 className="w-32 bg-zinc-900 text-white px-2 py-2 rounded-lg border border-zinc-700 text-xs focus:outline-none"
+ 467:                               >
+ 468:                                 <option value="Worship Leader">Worship Leader</option>
+ 469:                                 <option value="Guitarist">Guitarist</option>
+ 470:                                 <option value="Bassist">Bassist</option>
+ 471:                                 <option value="Pianist">Pianist</option>
+ 472:                                 <option value="Drummer">Drummer</option>
+ 473:                                 <option value="Back up">Back up</option>
+ 474:                                 <option value="Tambourine">Tambourine</option>
+ 475:                                 <option value="Media Team">Media Team</option>
+ 476:                               </select>
+ 477:                             </div>
+ 478:                           );
+ 480:                       </div>
+ 481:                     ) : (
+ 482:                       <p className="text-xs text-zinc-500">Select a group to review members.</p>
+ 484:                   </div>
+ 486: 
+ 487:               </div>
+ 489: 
+ 490:             <div className="space-y-4">
+ 492:                 service.lineup.map((member) => (
+ 494:                     <div className="w-10 h-10 rounded-full bg-black border border-zinc-800 flex items-center justify-center font-bold text-zinc-300">
+ 496:                     </div>
+ 497:                     <div>
+ 500:                     </div>
+ 504:                     </div>
+ 506:                       <button
+ 508:                         className="p-1.5 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+ 509:                         title="Remove from lineup"
+ 511:                       >
+ 513:                       </button>
+ 515:                   </div>
+ 516:                 ))
+ 517:               ) : (
+ 518:                 <p className="text-center text-zinc-500 text-sm py-4">No group members assigned yet.</p>
+ 520:             </div>
+ 521:           </div>
+ 522:         </div>
+ 523:       </div>
+ 524: 
+ 527:         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+ 528:           <div className="bg-zinc-900 border border-zinc-800 rounded-[2rem] w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+ 529:             <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+ 530:               <h2 className="text-2xl font-bold text-white">
+ 532:                   <div className="flex flex-col gap-1">
+ 533:                     <span>Target Key for Service</span>
+ 535:                   </div>
+ 537:               </h2>
+ 538:               <button 
+ 540:                   setIsSongModalOpen(false);
+ 541:                   setSelectedSongForFlow(null);
+ 542:                 } 
+ 543:                 className="text-zinc-500 hover:text-white p-2"
+ 544:               >
+ 546:               </button>
+ 547:             </div>
+ 548: 
+ 549:             <div className="flex-1 overflow-y-auto p-4">
+ 551:                 <div className="space-y-2">
+ 552:                   <div className="mb-4">
+ 553:                     <div className="relative">
+ 555:                       <input
+ 556:                         type="text"
+ 557:                         placeholder="Search your library..."
+ 560:                         className="w-full pl-10 pr-4 py-3 bg-black border border-zinc-700 rounded-xl focus:ring-2 focus:ring-white focus:outline-none transition-all text-white"
+ 561:                       />
+ 562:                     </div>
+ 563:                   </div>
+ 564: 
+ 566:                     ?.filter(s => s.title.toLowerCase().includes(songSearchQuery.toLowerCase()) || s.artist?.toLowerCase().includes(songSearchQuery.toLowerCase()))
+ 567:                     .map(song => (
+ 568:                       <button
+ 571:                           setSelectedSongForFlow(song);
+ 572:                           setSelectedKey(song.key || 'C');
+ 573:                         }
+ 574:                         className="w-full text-left p-4 bg-black border border-zinc-800 rounded-xl hover:border-zinc-600 hover:bg-zinc-800/50 transition-all flex items-center gap-4 group"
+ 575:                       >
+ 576:                         <div className="p-3 bg-zinc-900 rounded-lg group-hover:bg-zinc-700 transition-colors">
+ 578:                         </div>
+ 579:                         <div>
+ 582:                         </div>
+ 583:                         <div className="ml-auto">
+ 584:                           <span className="text-xs font-bold px-2 py-1 bg-zinc-900 rounded-md text-zinc-400 border border-zinc-800">
+ 586:                           </span>
+ 587:                         </div>
+ 588:                       </button>
+ 590:                 </div>
+ 591:               ) : (
+ 592:                 <div className="space-y-8 p-4">
+ 593:                   <div className="flex items-center gap-4 p-4 bg-black border border-zinc-800 rounded-2xl">
+ 594:                     <div className="p-3 bg-zinc-800 rounded-xl">
+ 596:                     </div>
+ 597:                     <div>
+ 600:                     </div>
+ 601:                   </div>
+ 602: 
+ 603:                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+ 605:                       <button
+ 609:                           selectedKey === k 
+ 610:                             ? 'bg-white text-black border-white shadow-lg shadow-white/10 scale-105' 
+ 611:                             : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:border-zinc-500'
+ 613:                       >
+ 615:                       </button>
+ 617:                   </div>
+ 618: 
+ 619:                   <div className="flex gap-3 pt-4">
+ 620:                     <button
+ 622:                       className="flex-1 py-4 bg-zinc-800 text-white font-bold rounded-2xl hover:bg-zinc-700 transition-all"
+ 623:                     >
+ 624:                       Back
+ 625:                     </button>
+ 626:                     <button
+ 628:                       className="flex-[2] py-4 bg-white text-black font-black rounded-2xl hover:bg-zinc-200 transition-all shadow-xl shadow-white/5"
+ 629:                     >
+ 630:                       Add to Flow
+ 631:                     </button>
+ 632:                   </div>
+ 633:                 </div>
+ 636:                 <div className="text-center p-8 text-zinc-500">Your library is empty. Add songs from the Song Library first!</div>
+ 638:             </div>
+ 639:           </div>
+ 640:         </div>
+ 643:         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+ 644:           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm flex flex-col shadow-2xl p-6 text-center space-y-6">
+ 645:             <div className="mx-auto w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-2">
+ 647:             </div>
+ 648:             <div>
+ 649:               <h3 className="text-xl font-bold text-white mb-2">Remove Group Member?</h3>
+ 650:               <p className="text-sm text-zinc-400">
+ 652:               </p>
+ 653:             </div>
+ 654:             
+ 655:             <div className="flex gap-3">
+ 656:               <button
+ 658:                 className="flex-1 px-4 py-3 bg-zinc-800 text-white font-bold rounded-xl hover:bg-zinc-700 transition"
+ 659:               >
+ 660:                 Cancel
+ 661:               </button>
+ 662:               <button
+ 665:                 className="flex-1 px-4 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-400 transition flex items-center justify-center gap-2"
+ 666:               >
+ 668:               </button>
+ 669:             </div>
+ 670:           </div>
+ 671:         </div>
+ 673: 
+ 675:         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+ 676:           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm flex flex-col shadow-2xl p-6 text-center space-y-6">
+ 677:             <div className="mx-auto w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-2">
+ 679:             </div>
+ 680:             <div>
+ 681:               <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Finish Service?</h3>
+ 682:               <p className="text-sm text-zinc-400 leading-relaxed px-2">
+ 683:                 This will move the service to <span className="text-white font-bold">History</span>. You will no longer be able to edit the flow or use Live Mode.
+ 684:               </p>
+ 685:             </div>
+ 686:             
+ 687:             <div className="flex flex-col gap-2">
+ 688:               <button
+ 691:                 className="w-full py-4 bg-emerald-500 text-black font-black rounded-2xl hover:bg-emerald-400 transition-all active:scale-95 shadow-xl shadow-emerald-500/10 flex items-center justify-center gap-2"
+ 692:               >
+ 694:               </button>
+ 695:               <button
+ 697:                 className="w-full py-3 bg-zinc-900 text-zinc-500 font-bold rounded-2xl hover:text-white transition-colors"
+ 698:               >
+ 699:                 Not Yet
+ 700:               </button>
+ 701:             </div>
+ 702:           </div>
+ 703:         </div>
+ 705: 
+ 706:     </div>
+ 707:   );
+ 709: 
+ 710: // Helper for detecting the likely key from lyrics if metadata is missing
+ 712:   if (!lyrics) return null;
+ 713:   const normalized = lyrics.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+ 714:   const chordRegex = /([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi;
+ 715:   
+ 716:   const lines = normalized.split('\n');
+ 718:     const words = line.trim().split(/\s+/).filter(w => w.length > 0);
+ 719:     return words.length > 0 && words.every(w => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/.test(w));
+ 721: 
+ 724:       const match = line.match(chordRegex);
+ 726:         const baseKey = match[0].match(/^[A-G][b#]?/)[0];
+ 728:         return flatMap[baseKey] || baseKey;
+ 732:   return null;
+ 734: 
+ 735: export default ServicePlanner;

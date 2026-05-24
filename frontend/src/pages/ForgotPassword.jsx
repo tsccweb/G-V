@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, KeyRound, Lock, ArrowRight, ArrowLeft, ShieldCheck, MailCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft, ShieldCheck, MailCheck, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
@@ -18,16 +18,13 @@ export default function ForgotPassword() {
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
-    console.log('Sending OTP for:', email);
     setLocalError(null);
     try {
       const success = await forgotPassword(email);
-      console.log('OTP Send Success:', success);
       if (success) {
         setStep(2);
       }
     } catch (err) {
-      console.error('handleSendOTP Error:', err);
       setLocalError('An unexpected error occurred. Please try again.');
     }
   };
@@ -94,7 +91,7 @@ export default function ForgotPassword() {
                     <Mail size={24} />
                   </div>
                   <h3 className="text-2xl font-bold tracking-tight">Forgot Password?</h3>
-                  <p className="text-zinc-500 text-sm mt-1">Enter your email and we'll send you an OTP code.</p>
+                  <p className="text-zinc-500 text-sm mt-1">Enter your email and we&apos;ll send you an OTP code.</p>
                 </div>
                 <form onSubmit={handleSendOTP} className="space-y-6">
                   <div className="space-y-1.5">
@@ -126,7 +123,7 @@ export default function ForgotPassword() {
                     <MailCheck size={32} />
                   </div>
                   <h3 className="text-2xl font-bold tracking-tight">Check your Email</h3>
-                  <p className="text-zinc-500 text-sm mt-1">We've sent a code to <span className="text-zinc-300">{email}</span></p>
+                  <p className="text-zinc-500 text-sm mt-1">We&apos;ve sent a code to <span className="text-zinc-300">{email}</span></p>
                 </div>
                 <form onSubmit={handleVerifyOTP} className="space-y-6">
                   <div className="space-y-1.5">
@@ -155,7 +152,7 @@ export default function ForgotPassword() {
                       onClick={() => forgotPassword(email)}
                       className="w-full text-xs font-bold text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
                     >
-                      Didn't get the code? <span className="text-emerald-500">Resend OTP</span>
+                      Didn&apos;t get the code? <span className="text-emerald-500">Resend OTP</span>
                     </button>
                     <button
                       type="button"

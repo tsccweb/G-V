@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getServices } from '../services/serviceService';
 import { getSongs, createSong } from '../services/songService';
 import { 
-  Play, Settings, Plus, LayoutList, Music, Radio, Users, Calendar, Lock, 
-  ArrowRight, Sun, Moon, Wand2, Sparkles, Loader2, CheckCircle2, AlertCircle, 
-  ExternalLink, FileUp, FileText 
+  Play, LayoutList, Music, Radio, Users, Calendar, Lock, 
+  ArrowRight, Sparkles, Loader2, AlertCircle, 
+  FileUp, FileText 
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
@@ -13,13 +13,11 @@ import { importSongFromPdf } from '../services/importService';
 import NotificationTray from '../components/NotificationTray';
 
 function Dashboard() {
-  const { user, theme, toggleTheme } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [importUrl, setImportUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState(null);
-  const [importSuccess, setImportSuccess] = useState(false);
   const [showTrialPopup, setShowTrialPopup] = useState(false);
 
   // Check if this is a new user who should see the trial popup
@@ -77,12 +75,11 @@ function Dashboard() {
     
     setIsImporting(true);
     setImportError(null);
-    setImportSuccess(false);
     
     try {
       const parsedData = await importSongFromPdf(file);
       
-      const newSong = await createSong({
+      await createSong({
         title: parsedData.title,
         artist: parsedData.artist,
         lyrics: parsedData.lyrics,
@@ -90,12 +87,9 @@ function Dashboard() {
         key: parsedData.key || 'C',
         category: 'Imported'
       });
-      
-      setImportSuccess(true);
       queryClient.invalidateQueries(['songs']);
       setTimeout(() => navigate('/songs'), 1500);
     } catch (error) {
-      console.error('PDF Import failed:', error);
       setImportError(error.response?.data?.error || 'Failed to parse PDF.');
     } finally {
       setIsImporting(false);
@@ -127,7 +121,7 @@ function Dashboard() {
               <div className="space-y-2">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Welcome to G{'>'}{'/'}{'\\'}{'\\'} V!</h2>
                 <p className="text-zinc-400 text-sm font-medium leading-relaxed">
-                  You've been gifted a <span className="text-amber-400 font-black">FREE Standard Plan</span> for <span className="text-white font-black">1 month</span>!
+                  You have been gifted a <span className="text-amber-400 font-black">FREE Standard Plan</span> for <span className="text-white font-black">1 month</span>!
                 </p>
               </div>
 
@@ -158,7 +152,7 @@ function Dashboard() {
                 onClick={dismissTrialPopup}
                 className="w-full py-4 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-zinc-200 active:scale-95 transition-all text-sm shadow-xl"
               >
-                Got It — Let's Go!
+                Got It — Let&apos;s Go!
               </button>
             </div>
           </div>

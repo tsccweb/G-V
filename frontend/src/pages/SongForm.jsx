@@ -55,12 +55,12 @@ function SongForm() {
 
   const mutation = useMutation({
     mutationFn: (data) => isEdit ? updateSong(id, data) : createSong(data),
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['songs'] });
       toast.success(`${formData.title} ${isEdit ? 'updated' : 'added'}!`);
       navigate('/songs');
     },
-    onError: (err) => {
+    onError: () => {
       // Error is handled by mutation.error
     }
   });

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
-  Mail, Check, X, UserPlus, Clock, Users, Shield, 
-  Music, Mic, Star, Headphones, Monitor, Trash2, Send
+  Mail, X, UserPlus, Clock, Users, Shield, 
+  Music, Star, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
@@ -53,7 +53,7 @@ function GroupLineup() {
     enabled: !!token
   });
 
-  const ownedServices = services?.filter((service) => service.userId === user?.id) || [];
+  const ownedServices = useMemo(() => services?.filter((service) => service.userId === user?.id) || [], [services, user?.id]);
 
   useEffect(() => {
     if (!selectedServiceId && ownedServices.length > 0) {

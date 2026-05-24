@@ -12,7 +12,6 @@ import {
   Users, 
   CreditCard, 
   Search, 
-  MoreVertical, 
   Check, 
   X, 
   Trash2, 

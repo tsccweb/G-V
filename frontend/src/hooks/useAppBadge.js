@@ -33,7 +33,7 @@ export const useAppBadge = (isAuthenticated) => {
         }
       }
     } catch (error) {
-      console.error('Failed to update app badge:', error);
+      // badge update failed silently
     }
   }, [isAuthenticated]);
 
