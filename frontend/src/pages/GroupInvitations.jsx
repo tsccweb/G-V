@@ -156,89 +156,82 @@ function GroupInvitations() {
 
   if (isInvitesLoading || isServicesLoading) return (
     <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-white/10 border-t-white rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-white/10 border-t-white rounded-full animate-spin" />
     </div>
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-12 pb-32">
-      {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">
-              Groups & <span className="text-zinc-500">Invitations</span>
-            </h1>
-            <p className="text-zinc-500 max-w-xl">
-              Manage your worship ministry groups, send invitations, and track member status in one place.
-            </p>
+    <div className="max-w-6xl mx-auto p-4 md:p-10 space-y-10 pb-32">
+      <div className="rounded-[2.5rem] border border-zinc-800/60 bg-zinc-950/90 shadow-2xl shadow-black/30 p-10 backdrop-blur-xl">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-300">Group Lineup</div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">Manage groups, members, and lineup invitations</h1>
+            <p className="max-w-2xl text-zinc-400 leading-7">Send invitations to group members, review pending lineup responses, and keep every worship team assignment polished and clear.</p>
           </div>
           <Link 
             to="/groups"
-            className="hidden md:flex items-center gap-3 px-6 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-2xl transition-all group"
+            className="inline-flex items-center gap-3 rounded-[1.75rem] border border-zinc-800 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-[0.26em] text-zinc-200 transition hover:border-emerald-400/40 hover:bg-emerald-500/10"
           >
-            <Users size={18} className="text-emerald-500 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-black uppercase tracking-widest text-zinc-300">Manage Groups</span>
+            <Users size={18} className="text-emerald-500" />
+            <span>Manage Groups</span>
           </Link>
         </div>
+      </div>
 
-      {/* Invitations Section */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/50">
-          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-            <Mail size={14} className="text-emerald-500" />
-            Pending Your Response
-          </h2>
-          <span className="px-2 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500">
-            {invitations?.length || 0} Total
+      <section className="rounded-[2rem] border border-zinc-800/60 bg-zinc-950/90 p-6 shadow-2xl shadow-black/20">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pb-4 border-b border-zinc-800/50">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-[0.24em] text-emerald-300">Pending Invitations</h2>
+            <p className="mt-2 text-sm text-zinc-400 max-w-2xl">Review all lineup invitations that need a response from your team or leaders.</p>
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-zinc-300 border border-zinc-800/60">
+            <Mail size={14} className="text-emerald-400" /> {invitations?.length || 0} total
           </span>
         </div>
 
         <AnimatePresence mode="popLayout">
           {invitations?.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4 mt-6">
               {invitations.map((invite) => (
                 <motion.div
                   key={invite.id}
                   layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="group relative flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 bg-zinc-900/40 backdrop-blur-md border border-zinc-800/50 rounded-[2rem] hover:border-zinc-700/50 transition-all duration-500"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="group overflow-hidden rounded-[2rem] border border-zinc-800/60 bg-zinc-900/90 p-6 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5"
                 >
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
-                      <Clock size={28} className="text-zinc-400" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold text-white">{invite.serviceTitle}</h3>
-                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase rounded-full border border-emerald-500/20">
-                          Invite
-                        </span>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-500/10 to-zinc-900 border border-zinc-800">
+                        <Clock size={28} className="text-emerald-300" />
                       </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-black/40 rounded-lg border border-zinc-800/50">
-                          <span className="text-zinc-500">{roleIcons[invite.role] || <Users size={14}/>}</span>
-                          <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">{invite.role}</span>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold text-white">{invite.serviceTitle}</h3>
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-3 py-1 text-zinc-300 border border-zinc-800/60">
+                            {roleIcons[invite.role] || <Users size={14}/>} {invite.role}
+                          </span>
+                          <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">by {invite.sender}</span>
                         </div>
-                        <span className="text-xs text-zinc-500 italic">by {invite.sender}</span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex gap-3 mt-4 md:mt-0">
-                    <button
-                      onClick={() => respondMutation.mutate({ id: invite.id, status: 'DECLINED' })}
-                      className="flex-1 md:flex-none px-6 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-500 font-bold hover:text-red-400 hover:border-red-400/30 transition-all active:scale-95"
-                    >
-                      Decline
-                    </button>
-                    <button
-                      onClick={() => respondMutation.mutate({ id: invite.id, status: 'ACCEPTED' })}
-                      className="flex-1 md:flex-none px-8 py-3 rounded-2xl bg-white text-black font-black hover:bg-zinc-200 shadow-xl shadow-white/5 transition-all active:scale-95 translate-y-[-2px] hover:translate-y-[-4px]"
-                    >
-                      Accept Invite
-                    </button>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <button
+                        onClick={() => respondMutation.mutate({ id: invite.id, status: 'DECLINED' })}
+                        className="min-w-[140px] rounded-3xl border border-red-400/20 bg-zinc-950 px-5 py-3 text-sm font-bold text-red-400 transition hover:bg-red-500/10"
+                      >
+                        Decline
+                      </button>
+                      <button
+                        onClick={() => respondMutation.mutate({ id: invite.id, status: 'ACCEPTED' })}
+                        className="min-w-[140px] rounded-3xl bg-white px-5 py-3 text-sm font-black text-black shadow-lg shadow-white/10 transition hover:bg-zinc-100"
+                      >
+                        Accept Invite
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -247,36 +240,35 @@ function GroupInvitations() {
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="py-16 text-center bg-zinc-900/20 border border-zinc-800/50 border-dashed rounded-[3rem]"
+              className="mt-6 rounded-[2rem] border border-dashed border-zinc-800/50 bg-zinc-900/80 p-12 text-center"
             >
-              <div className="w-16 h-16 bg-zinc-900/50 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-zinc-800">
-                <Mail size={32} className="text-zinc-700" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-zinc-800/70 border border-zinc-700">
+                <Mail size={32} className="text-zinc-500" />
               </div>
-              <p className="text-zinc-500 font-medium">No pending invitations at the moment.</p>
+              <p className="text-zinc-400 text-base font-medium">No pending invitations at the moment.</p>
             </motion.div>
           )}
         </AnimatePresence>
       </section>
 
-      {/* Invite Users to Group Section */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/50">
-          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-            <UserPlus size={14} className="text-emerald-500" />
-            Invite Users to a Group
-          </h2>
-          <span className="px-2 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500">
+      <section className="rounded-[2rem] border border-zinc-800/60 bg-zinc-950/90 p-6 shadow-2xl shadow-black/20">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pb-4 border-b border-zinc-800/50">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-[0.24em] text-emerald-300">Invite Members into a Group</h2>
+            <p className="mt-2 text-sm text-zinc-400 max-w-2xl">Select a group, choose a user, and add them directly to the lineup-ready member roster.</p>
+          </div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-zinc-300 border border-zinc-800/60">
             {groups?.length || 0} Groups
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-3">
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select Group</label>
             <select
               value={selectedGroupId || ''}
               onChange={(e) => setSelectedGroupId(e.target.value)}
-              className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-3xl px-5 py-4 text-sm text-white focus:outline-none focus:border-emerald-400/30 focus:ring-4 focus:ring-emerald-400/10 transition-all appearance-none"
             >
               {!groups?.length && <option value="">No groups available</option>}
               {groups?.map((group) => (
@@ -290,7 +282,7 @@ function GroupInvitations() {
             <select
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-3xl px-5 py-4 text-sm text-white focus:outline-none focus:border-emerald-400/30 focus:ring-4 focus:ring-emerald-400/10 transition-all appearance-none"
             >
               <option value="">Choose a user</option>
               {users?.map((userOption) => (
@@ -305,7 +297,7 @@ function GroupInvitations() {
             <button
               onClick={handleAddUserToGroup}
               disabled={!selectedGroupId || !selectedUserId || addGroupMembersMutation.isLoading}
-              className="w-full py-4 bg-white text-black font-black rounded-3xl hover:bg-zinc-200 transition-all shadow-xl shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-[1.75rem] bg-white px-6 py-4 text-sm font-black text-black shadow-xl shadow-white/5 transition hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {addGroupMembersMutation.isLoading ? 'Inviting...' : 'Invite to Group'}
             </button>
@@ -313,7 +305,7 @@ function GroupInvitations() {
         </div>
 
         {groupInviteMsg && (
-          <div className={`p-4 rounded-2xl text-xs font-bold border ${groupInviteMsg.ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+          <div className={`mt-4 rounded-2xl border p-4 text-xs font-bold ${groupInviteMsg.ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
             {groupInviteMsg.t}
           </div>
         )}
@@ -328,32 +320,35 @@ function GroupInvitations() {
             exit={{ opacity: 0, y: 100 }}
             className="fixed inset-x-4 bottom-24 z-50 md:max-w-2xl md:mx-auto"
           >
-            <div className="p-8 bg-zinc-950/80 backdrop-blur-2xl border border-white/10 rounded-[3rem] shadow-2xl space-y-6">
+            <div className="p-8 bg-zinc-950/95 backdrop-blur-2xl border border-emerald-500/10 rounded-[3rem] shadow-2xl shadow-black/40 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-black text-white">Send New Invitation</h3>
-                <button onClick={() => setShowInvite(false)} className="p-2 hover:bg-white/10 rounded-xl text-zinc-500 hover:text-white transition-all">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.35em] text-emerald-300 font-semibold">Send Invitation</p>
+                  <h3 className="text-2xl font-black text-white">Add a group member to a service lineup</h3>
+                </div>
+                <button onClick={() => setShowInvite(false)} className="p-3 rounded-3xl bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white transition-all">
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Assigned Service</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Assigned Service</label>
                   <select 
                     value={selectedServiceId || ''} 
                     onChange={e => setSelectedServiceId(e.target.value)}
-                    className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+                    className="w-full rounded-3xl border border-zinc-800/70 bg-zinc-900 px-5 py-4 text-sm text-white outline-none transition focus:border-emerald-400/40 focus:ring-4 focus:ring-emerald-400/10"
                   >
                     {!ownedServices.length && <option value="">No services found</option>}
                     {ownedServices.map(s => <option key={s.id} value={s.id}>{s.title || s.date}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Group Member Role</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Role</label>
                   <select 
                     value={inviteRole} 
                     onChange={e => setInviteRole(e.target.value)}
-                    className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+                    className="w-full rounded-3xl border border-zinc-800/70 bg-zinc-900 px-5 py-4 text-sm text-white outline-none transition focus:border-emerald-400/40 focus:ring-4 focus:ring-emerald-400/10"
                   >
                     <option value="MEMBER">Member</option>
                     <option value="MUSICIAN">Musician</option>
@@ -361,49 +356,42 @@ function GroupInvitations() {
                     <option value="PASTOR">Pastor</option>
                   </select>
                 </div>
-                <div className="md:col-span-2 grid grid-cols-1 gap-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select Group</label>
-                      <select
-                        value={selectedGroupId || ''}
-                        onChange={(e) => setSelectedGroupId(e.target.value)}
-                        className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
-                      >
-                        {!groups?.length && <option value="">No groups available</option>}
-                        {groups?.map((group) => (
-                          <option key={group.id} value={group.id}>{group.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select Member</label>
-                      <select
-                        value={selectedMemberId}
-                        onChange={(e) => setSelectedMemberId(e.target.value)}
-                        className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
-                      >
-                        <option value="">Choose a member</option>
-                        {selectedGroup?.members?.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.firstName} {member.lastName} - {member.email}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-[0.18em] font-black">
-                    Select the group first, then choose a member from that group to invite them to the service lineup.
-                  </p>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Select Group</label>
+                  <select
+                    value={selectedGroupId || ''}
+                    onChange={(e) => setSelectedGroupId(e.target.value)}
+                    className="w-full rounded-3xl border border-zinc-800/70 bg-zinc-900 px-5 py-4 text-sm text-white outline-none transition focus:border-emerald-400/40 focus:ring-4 focus:ring-emerald-400/10"
+                  >
+                    {!groups?.length && <option value="">No groups available</option>}
+                    {groups?.map((group) => (
+                      <option key={group.id} value={group.id}>{group.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Select Member</label>
+                  <select
+                    value={selectedMemberId}
+                    onChange={(e) => setSelectedMemberId(e.target.value)}
+                    className="w-full rounded-3xl border border-zinc-800/70 bg-zinc-900 px-5 py-4 text-sm text-white outline-none transition focus:border-emerald-400/40 focus:ring-4 focus:ring-emerald-400/10"
+                  >
+                    <option value="">Choose a member</option>
+                    {selectedGroup?.members?.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.firstName} {member.lastName} - {member.email}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
+              <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">Select the group first, then choose a member to invite them into the service lineup.</p>
 
               {inviteMsg && (
                 <motion.div 
                   initial={{ opacity: 0, x: -10 }} 
                   animate={{ opacity: 1, x: 0 }}
-                  className={`p-4 rounded-2xl text-xs font-bold border ${inviteMsg.ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}
+                  className={`rounded-2xl border p-4 text-xs font-bold ${inviteMsg.ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}
                 >
                   {inviteMsg.t}
                 </motion.div>
@@ -412,15 +400,15 @@ function GroupInvitations() {
               <button 
                 onClick={handleInviteSubmit}
                 disabled={inviteMutation.isPending || !ownedServices.length || !selectedGroupId || !selectedMemberId}
-                className="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 active:scale-[0.98] shadow-xl shadow-white/5 disabled:opacity-50"
+                className="w-full rounded-[2rem] bg-white px-8 py-4 text-sm font-black text-black shadow-xl shadow-white/10 transition hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {inviteMutation.isPending ? (
-                  <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/20 border-t-black" />
                 ) : (
-                  <>
+                  <div className="inline-flex items-center justify-center gap-3">
                     <Send size={18} />
                     <span>Deliver Invitation</span>
-                  </>
+                  </div>
                 )}
               </button>
             </div>

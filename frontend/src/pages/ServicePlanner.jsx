@@ -53,10 +53,7 @@ function ServicePlanner() {
   }
 
   const [items, setItems] = useState([]);
-  const [users, setUsers] = useState([]);
   const [isAssigning, setIsAssigning] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedRole, setSelectedRole] = useState('Vocalist');
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [selectedGroupMemberIds, setSelectedGroupMemberIds] = useState([]);
   const [memberRoles, setMemberRoles] = useState({});
@@ -92,20 +89,6 @@ function ServicePlanner() {
   }, [selectedGroupDetails]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${API_URL}/auth/users`, { headers: { Authorization: `Bearer ${token}` } });
-        setUsers(res.data);
-        if (res.data.length > 0) setSelectedUserId(res.data[0].id);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
     if (service?.items) {
       setItems(service.items);
     }
@@ -118,14 +101,6 @@ function ServicePlanner() {
     }
   });
 
-  const assignMutation = useMutation({
-    mutationFn: (data) => addToLineup(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services', id] });
-      setIsAssigning(false);
-    }
-  });
-
   const removeLineupMutation = useMutation({
     mutationFn: (lineupId) => removeFromLineup(id, lineupId),
     onSuccess: () => {
@@ -133,11 +108,6 @@ function ServicePlanner() {
       setMemberToRemove(null);
     }
   });
-
-  const handleAssign = () => {
-    if (!selectedUserId || !selectedRole) return;
-    assignMutation.mutate({ serviceId: id, userId: selectedUserId, role: selectedRole });
-  };
 
   const toggleGroupMember = (memberId) => {
     setSelectedGroupMemberIds(prev => prev.includes(memberId)
@@ -517,38 +487,6 @@ function ServicePlanner() {
                   </div>
                 )}
 
-                <div className="border-t border-zinc-800 pt-4 space-y-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Or assign an individual member</p>
-                  <select
-                    value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
-                  >
-                    <option value="">Select a person</option>
-                    {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
-                  </select>
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
-                  >
-                    <option value="Worship Leader">Worship Leader</option>
-                    <option value="Guitarist">Guitarist</option>
-                    <option value="Bassist">Bassist</option>
-                    <option value="Pianist">Pianist</option>
-                    <option value="Drummer">Drummer</option>
-                    <option value="Back up">Back up</option>
-                    <option value="Tambourine">Tambourine</option>
-                    <option value="Media Team">Media Team</option>
-                  </select>
-                  <button
-                    onClick={handleAssign}
-                    disabled={assignMutation.isPending}
-                    className="w-full flex items-center justify-center gap-2 py-2 bg-white text-black font-bold rounded-lg hover:bg-zinc-200"
-                  >
-                    <Check size={16} /> <span>Assign Role</span>
-                  </button>
-                </div>
               </div>
             )}
 
