@@ -44,12 +44,15 @@ function Dashboard() {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const nextService = services?.sort((a, b) => new Date(a.date) - new Date(b.date))
-    .find(s => {
+  const activeServices = services?.filter(s => s.status !== 'COMPLETED') || [];
+  const futureServices = activeServices
+    .filter((s) => {
       const serviceDate = new Date(s.date);
       serviceDate.setHours(0, 0, 0, 0);
       return serviceDate >= today;
-    });
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const nextService = futureServices[0];
 
   const formattedDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -331,7 +334,7 @@ function Dashboard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {services?.slice(0, 3).map(service => (
+            {futureServices?.slice(0, 3).map(service => (
               <Link key={service.id} to={`/services/${service.id}`} className="group flex items-center gap-4 p-5 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-zinc-600 transition-all">
                 <div className="w-12 h-12 bg-zinc-950 rounded-xl flex flex-col items-center justify-center border border-zinc-800">
                   <span className="text-[10px] font-black text-white">{new Date(service.date).toLocaleDateString('en-US', { day: '2-digit' })}</span>
@@ -344,7 +347,7 @@ function Dashboard() {
                 <Calendar size={16} className="text-zinc-700 group-hover:text-zinc-400 transition-colors" />
               </Link>
             ))}
-            {!services?.length && <p className="text-center py-10 text-zinc-700 text-xs font-bold font-mono">NO SERVICE UPDATES</p>}
+            {!futureServices?.length && <p className="text-center py-10 text-zinc-700 text-xs font-bold font-mono">NO SERVICE UPDATES</p>}
           </div>
         )}
       </div>
