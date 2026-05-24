@@ -32,6 +32,9 @@ exports.getGroups = async (req, res) => {
     const groups = await prisma.group.findMany({
       where: { userId: req.user.userId },
       include: {
+        members: {
+          select: { id: true, firstName: true, lastName: true, email: true }
+        },
         _count: {
           select: { members: true }
         }

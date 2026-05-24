@@ -179,6 +179,24 @@ function GroupManagement() {
                     <div>
                       <h3 className="text-xl font-bold text-white tracking-tight leading-tight">{group.name}</h3>
                       <p className="text-zinc-500 text-xs mt-1 font-medium line-clamp-2">{group.description || 'No description provided.'}</p>
+
+                      {group.members?.length > 0 && (
+                        <div className="mt-4 text-[11px] text-zinc-400 space-y-2">
+                          <p className="font-bold uppercase tracking-[0.18em] text-zinc-500">Members</p>
+                          <div className="flex flex-wrap gap-2">
+                            {group.members.slice(0, 4).map((member) => (
+                              <span key={member.id} className="px-2 py-1 bg-zinc-950/80 border border-zinc-800 rounded-2xl text-[10px] uppercase tracking-[0.15em] text-zinc-300">
+                                {member.firstName} {member.lastName}
+                              </span>
+                            ))}
+                            {group.members.length > 4 && (
+                              <span className="px-2 py-1 bg-zinc-950/80 border border-zinc-800 rounded-2xl text-[10px] uppercase tracking-[0.15em] text-zinc-300">
+                                +{group.members.length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -326,15 +344,9 @@ function GroupManagement() {
                   <Users size={40} className="text-zinc-700" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-black text-white uppercase tracking-tight">Quick Organize</h3>
-                  <p className="text-zinc-500 text-xs font-medium leading-relaxed">Select a group to edit its details or create a new one to speed up your service planning.</p>
+                  <h3 className="text-lg font-black text-white uppercase tracking-tight">Group Management</h3>
+                  <p className="text-zinc-500 text-xs font-medium leading-relaxed">Select a group to edit its details, or use the button above to create a new group.</p>
                 </div>
-                <button 
-                  onClick={() => setShowCreate(true)}
-                  className="w-full py-4 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white font-black rounded-2xl transition-all border border-zinc-800 uppercase text-[10px] tracking-widest"
-                >
-                  Get Started
-                </button>
               </div>
             )}
           </AnimatePresence>
