@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getServiceById,
@@ -28,11 +28,17 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 function ServicePlanner() {
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { data: service, isLoading, error } = useQuery({
     queryKey: ['services', id],
     queryFn: () => getServiceById(id),
     enabled: !!id
+  });
+  const { data: songsData } = useQuery({
+    queryKey: ['songs'],
+    queryFn: getSongs,
+    enabled: !!user
   });
 
   if (!id) {
@@ -256,6 +262,7 @@ function ServicePlanner() {
 
   if (isLoading) return <div className="p-8 text-center text-zinc-400">Loading planner...</div>;
   if (error) return <div className="p-8 text-center text-white">Error loading service</div>;
+  if (!service) return <div className="p-8 text-center text-white">Service not found.</div>;
 
   const getTypeIcon = (type) => {
     switch (type.toLowerCase()) {
