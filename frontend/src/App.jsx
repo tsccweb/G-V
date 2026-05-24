@@ -11,7 +11,7 @@ import ServiceList from './pages/ServiceList';
 import ServicePlanner from './pages/ServicePlanner';
 import ServiceForm from './pages/ServiceForm';
 import LiveWorshipMode from './pages/LiveWorshipMode';
-import GroupLineup from './pages/GroupLineup';
+import GroupInvitations from './pages/GroupInvitations';
 import Dashboard from './pages/Dashboard';
 import JoinSession from './pages/JoinSession';
 import SettingsPage from './pages/SettingsPage';
@@ -82,7 +82,7 @@ function App() {
             <Route path="/services/:id/live" element={user && user.plan !== 'FREE' ? <LiveWorshipMode /> : <Navigate to="/pricing" />} />
 
             {/* Groups & Settings */}
-            <Route path="/groups/lineup" element={user && user.plan !== 'FREE' ? <Layout><GroupLineup /></Layout> : <Navigate to="/pricing" />} />
+            <Route path="/groups/lineup" element={user && user.plan !== 'FREE' ? <Layout><GroupInvitations /></Layout> : <Navigate to="/pricing" />} />
             <Route path="/groups" element={user && user.plan !== 'FREE' ? <Layout><GroupManagement /></Layout> : <Navigate to="/pricing" />} />
             <Route path="/settings" element={user ? <Layout><SettingsPage /></Layout> : <Navigate to="/login" />} />
             <Route path="/pricing" element={user ? <Layout><Pricing /></Layout> : <Navigate to="/login" />} />
