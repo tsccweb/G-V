@@ -21,7 +21,7 @@ const roleIcons = {
   PASTOR: <Shield size={16} />,
 };
 
-function TeamLineup() {
+function GroupLineup() {
   const { user, token } = useAuthStore();
   const queryClient = useQueryClient();
   const [showInvite, setShowInvite] = useState(false);
@@ -91,7 +91,7 @@ function TeamLineup() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
-      queryClient.invalidateQueries({ queryKey: ['team'] });
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
     }
   });
 
@@ -237,7 +237,7 @@ function TeamLineup() {
         </AnimatePresence>
       </section>
 
-      {/* Team Services Section */}
+      {/* Group Services Section */}
       <section className="space-y-12">
         <div className="flex items-center justify-between pb-2 border-b border-zinc-800/50">
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
@@ -458,4 +458,4 @@ function TeamLineup() {
   );
 }
 
-export default TeamLineup;
+export default GroupLineup;

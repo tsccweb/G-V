@@ -114,11 +114,11 @@ function GroupManagement() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-4">
           <button 
-            onClick={() => navigate('/team')}
+            onClick={() => navigate('/')}
             className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group text-xs font-black uppercase tracking-widest"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            Back to Groups
+            Back to Dashboard
           </button>
           <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">

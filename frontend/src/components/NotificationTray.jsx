@@ -91,7 +91,7 @@ export default function NotificationTray() {
                         key={`${note.type}-${note.id}`}
                         onClick={() => {
                           if (note.type === 'INVITATION') {
-                            navigate('/team');
+                            navigate('/groups/lineup');
                             setIsOpen(false);
                           } else if (note.type === 'ADMIN_REQUEST') {
                             navigate('/admin');

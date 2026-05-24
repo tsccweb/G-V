@@ -297,8 +297,8 @@ function Dashboard() {
           <ArrowRight className="text-zinc-700 group-hover:text-white transition-colors" />
         </Link>
 
-        {/* Team */}
-        <Link to="/team" className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2rem] hover:border-zinc-700 transition-all flex items-center justify-between group">
+        {/* Groups */}
+        <Link to="/groups" className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2rem] hover:border-zinc-700 transition-all flex items-center justify-between group">
           <div className="flex items-center gap-6">
             <div className="p-4 bg-zinc-800 rounded-2xl text-zinc-400 group-hover:bg-zinc-100 group-hover:text-black transition-all">
               <Users size={24} />

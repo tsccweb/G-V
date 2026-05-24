@@ -22,7 +22,7 @@ function Layout({ children }) {
     { name: 'Home', path: '/', icon: Home },
     { name: 'Songs', path: '/songs', icon: Music },
     { name: 'Services', path: '/services', icon: Calendar, isPremium: true },
-    { name: 'Groups', path: '/team', icon: Users, isPremium: true },
+    { name: 'Groups', path: '/groups', icon: Users, isPremium: true },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
 
