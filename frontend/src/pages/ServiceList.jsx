@@ -203,7 +203,7 @@ function ServiceList() {
             }`}
           >
             <Clock size={16} />
-            {view === 'history' && <span></span>}
+            {view === 'history'}
           </button>
         </div>
 
