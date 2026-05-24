@@ -8,7 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import { getServices, inviteToLineup } from '../services/serviceService';
-import { getGroups, addMembersToGroup } from '../services/groupService';
+import { getGroups, getGroupById, addMembersToGroup } from '../services/groupService';
 import { getUsers } from '../services/authService';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -26,10 +26,10 @@ function GroupInvitations() {
   const { user, token } = useAuthStore();
   const queryClient = useQueryClient();
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('MEMBER');
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [inviteMsg, setInviteMsg] = useState(null);
   const [groupInviteMsg, setGroupInviteMsg] = useState(null);
@@ -63,6 +63,12 @@ function GroupInvitations() {
     enabled: !!token
   });
 
+  const { data: selectedGroup } = useQuery({
+    queryKey: ['group', selectedGroupId],
+    queryFn: () => getGroupById(selectedGroupId),
+    enabled: !!selectedGroupId
+  });
+
   const ownedServices = services?.filter((service) => service.userId === user?.id) || [];
 
   useEffect(() => {
@@ -77,12 +83,16 @@ function GroupInvitations() {
     }
   }, [groups, selectedGroupId]);
 
+  useEffect(() => {
+    setSelectedMemberId('');
+  }, [selectedGroupId]);
+
   const inviteMutation = useMutation({
     mutationFn: (data) => inviteToLineup(data),
     onSuccess: () => {
       setInviteMsg({ ok: true, t: 'Invitation sent successfully' });
       setTimeout(() => setInviteMsg(null), 3000);
-      setInviteEmail('');
+      setSelectedMemberId('');
       setInviteRole('MEMBER');
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
     },
@@ -126,41 +136,22 @@ function GroupInvitations() {
   };
 
   const handleInviteSubmit = () => {
-    if (!inviteEmail || !selectedServiceId) {
-      setInviteMsg({ ok: false, t: 'Please select a service and enter an email.' });
+    if (!selectedGroupId || !selectedMemberId || !selectedServiceId) {
+      setInviteMsg({ ok: false, t: 'Please select a service, a group, and a group member.' });
       return;
     }
-    inviteMutation.mutate({ serviceId: selectedServiceId, email: inviteEmail, role: inviteRole });
-  };
 
-  const handleAddFromGroup = async (groupId) => {
-    if (!selectedServiceId) return toast.error('Please select a service first.');
-    const group = groups?.find(g => g.id === groupId);
-    if (!group) return;
-
-    try {
-      // Get full group details to get member emails
-      const res = await axios.get(`${API_URL}/groups/${groupId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const fullGroup = res.data;
-      
-      if (!fullGroup.members?.length) return toast.error('Group has no members.');
-
-      toast.promise(
-        Promise.all(fullGroup.members.map(member => 
-          inviteToLineup({ serviceId: selectedServiceId, email: member.email, role: inviteRole })
-        )),
-        {
-          loading: `Inviting ${fullGroup.members.length} members...`,
-          success: 'Group members invited successfully!',
-          error: 'Some invitations failed. They might already be invited.'
-        }
-      );
-      setShowInvite(false);
-    } catch (err) {
-      toast.error('Failed to process group invitation.');
+    const member = selectedGroup?.members?.find((m) => m.id === selectedMemberId);
+    if (!member) {
+      setInviteMsg({ ok: false, t: 'Selected member is not available in the chosen group.' });
+      return;
     }
+
+    inviteMutation.mutate({
+      serviceId: selectedServiceId,
+      email: member.email,
+      role: inviteRole
+    });
   };
 
   if (isInvitesLoading || isServicesLoading) return (
@@ -370,32 +361,41 @@ function GroupInvitations() {
                     <option value="PASTOR">Pastor</option>
                   </select>
                 </div>
-                <div className="md:col-span-2 space-y-1.5">
-                  <div className="flex items-center justify-between px-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Member Email</label>
-                    {groups?.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-tighter">OR ADD FROM GROUP:</span>
-                        <select 
-                          onChange={(e) => {
-                            if (e.target.value) handleAddFromGroup(e.target.value);
-                            e.target.value = "";
-                          }}
-                          className="bg-emerald-500/10 border-none text-[10px] font-black text-emerald-500 uppercase px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-500/20 outline-none"
-                        >
-                          <option value="">SELECT GROUP...</option>
-                          {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                        </select>
-                      </div>
-                    )}
+                <div className="md:col-span-2 grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select Group</label>
+                      <select
+                        value={selectedGroupId || ''}
+                        onChange={(e) => setSelectedGroupId(e.target.value)}
+                        className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+                      >
+                        {!groups?.length && <option value="">No groups available</option>}
+                        {groups?.map((group) => (
+                          <option key={group.id} value={group.id}>{group.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select Member</label>
+                      <select
+                        value={selectedMemberId}
+                        onChange={(e) => setSelectedMemberId(e.target.value)}
+                        className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+                      >
+                        <option value="">Choose a member</option>
+                        {selectedGroup?.members?.map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.firstName} {member.lastName} - {member.email}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <input 
-                    value={inviteEmail} 
-                    onChange={e => setInviteEmail(e.target.value)}
-                    type="email" 
-                    placeholder="email@worship.com"
-                    className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all"
-                  />
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-[0.18em] font-black">
+                    Select the group first, then choose a member from that group to invite them to the service lineup.
+                  </p>
                 </div>
               </div>
 
@@ -411,7 +411,7 @@ function GroupInvitations() {
 
               <button 
                 onClick={handleInviteSubmit}
-                disabled={inviteMutation.isPending || !ownedServices.length}
+                disabled={inviteMutation.isPending || !ownedServices.length || !selectedGroupId || !selectedMemberId}
                 className="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-zinc-200 transition-all flex items-center justify-center gap-3 active:scale-[0.98] shadow-xl shadow-white/5 disabled:opacity-50"
               >
                 {inviteMutation.isPending ? (
