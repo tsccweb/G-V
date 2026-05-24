@@ -150,9 +150,13 @@ function LiveWorshipMode() {
       return nk;
     };
 
-    const guessed = guessOriginalKey(currentItem?.song?.lyrics);
+    // Prioritize explicit metadata key if available
     const metadata = getNormKey(currentItem?.song?.key);
-    return guessed || metadata || 'C';
+    if (metadata) return metadata;
+
+    // Otherwise, try to guess from lyrics
+    const guessed = guessOriginalKey(currentItem?.song?.lyrics);
+    return guessed || 'C';
   }, [currentItem]);
 
   useEffect(() => {
@@ -815,29 +819,42 @@ function guessOriginalKey(lyrics) {
   const normalized = lyrics.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const chordRegex = /([A-G][b#]?(?:m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?)/gi;
   
-  // If it's already ChordPro, look for the first chord in brackets
+  // 1. Look for metadata line like "Key: C" in lyrics
+  const keyLineMatch = normalized.match(/^Key:\s*([A-G][b#]?)/mi);
+  if (keyLineMatch) return keyLineMatch[1].toUpperCase().replace('DB', 'C#').replace('EB', 'D#').replace('GB', 'F#').replace('AB', 'G#').replace('BB', 'A#');
+
+  // 2. If it's already ChordPro, look for the first chord in brackets
   const bracketMatch = normalized.match(/\[([A-G][b#]?[^\]]*)\]/i);
   if (bracketMatch && bracketMatch[1]) {
-    const baseKey = bracketMatch[1].match(/^[A-G][b#]?/i)[0].toUpperCase();
-    const flatMap = { 'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#' };
-    return flatMap[baseKey] || baseKey;
+    const baseMatch = bracketMatch[1].match(/^[A-G][b#]?/i);
+    if (baseMatch) {
+      const baseKey = baseMatch[0].toUpperCase();
+      const flatMap = { 'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#' };
+      return flatMap[baseKey] || baseKey;
+    }
   }
 
+  // 3. Fallback to scanning lines for chords
   const lines = normalized.split('\n');
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed || trimmed.startsWith('[') || trimmed.startsWith('{')) continue;
 
-    // A line is likely a chord line if it's mostly chords and spaces
+    // Filter out common non-chord words that might look like chords but aren't
     const words = trimmed.split(/\s+/).filter(w => w.length > 0);
     const chords = words.filter(w => /^[A-G][b#]?(m|maj|min|aug|dim|sus|add|M|2|4|5|6|7|9|11|13)*(?:\/[A-G][b#]?)?$/i.test(w));
     
+    // A line is likely a chord line if at least half of the words are chords
+    // and there are at least 1 or more chords.
     if (chords.length > 0 && chords.length >= words.length * 0.5) {
       const match = line.match(chordRegex);
       if (match && match[0]) {
-        const baseKey = match[0].match(/^[A-G][b#]?/i)[0].toUpperCase();
-        const flatMap = { 'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#' };
-        return flatMap[baseKey] || baseKey;
+        const baseMatch = match[0].match(/^[A-G][b#]?/i);
+        if (baseMatch) {
+          const baseKey = baseMatch[0].toUpperCase();
+          const flatMap = { 'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#' };
+          return flatMap[baseKey] || baseKey;
+        }
       }
     }
   }

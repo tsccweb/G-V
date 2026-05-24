@@ -13,6 +13,7 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const worshipFlowRoutes = require('./routes/worshipFlowRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const groupRoutes = require('./routes/groupRoutes');
 const prisma = require('./utils/prisma');
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/flows', worshipFlowRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/groups', groupRoutes);
 
 app.get('/api/health', async (req, res) => {
   try {

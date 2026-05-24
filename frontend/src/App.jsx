@@ -17,6 +17,7 @@ import JoinSession from './pages/JoinSession';
 import SettingsPage from './pages/SettingsPage';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
+import GroupManagement from './pages/GroupManagement';
 import Layout from './components/Layout';
 import InstallPrompt from './components/InstallPrompt';
 import { useAppBadge } from './hooks/useAppBadge';
@@ -82,6 +83,7 @@ function App() {
 
             {/* Team & Settings */}
             <Route path="/team" element={user && user.plan !== 'FREE' ? <Layout><TeamLineup /></Layout> : <Navigate to="/pricing" />} />
+            <Route path="/groups" element={user && user.plan !== 'FREE' ? <Layout><GroupManagement /></Layout> : <Navigate to="/pricing" />} />
             <Route path="/settings" element={user ? <Layout><SettingsPage /></Layout> : <Navigate to="/login" />} />
             <Route path="/pricing" element={user ? <Layout><Pricing /></Layout> : <Navigate to="/login" />} />
             <Route path="/admin" element={user?.role === 'ADMIN' ? <Layout><AdminDashboard /></Layout> : <Navigate to="/" />} />

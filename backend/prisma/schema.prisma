@@ -33,6 +33,8 @@ model User {
   sentInvites     Invitation[]     @relation("SentInvitations")
   notifications   Notification[]
   subRequests     SubscriptionRequest[]
+  ownedGroups     Group[]          @relation("GroupOwner")
+  memberGroups    Group[]          @relation("GroupMembership")
 }
 
 model SubscriptionRequest {
@@ -210,6 +212,17 @@ model OTP {
   code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  userId      String   // The owner/creator of the group
+  owner       User     @relation("GroupOwner", fields: [userId], references: [id])
+  members     User[]   @relation("GroupMembership")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ─── ENUMS ──────────────────────────────────────────────────

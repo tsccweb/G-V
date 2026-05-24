@@ -16,3 +16,8 @@ export const changePassword = async (data) => {
   const response = await axios.put(`${API_URL}/auth/me/password`, data, { headers: getAuthHeader() });
   return response.data;
 };
+
+export const getUsers = async () => {
+  const response = await axios.get(`${API_URL}/auth/users`, { headers: getAuthHeader() });
+  return response.data;
+};

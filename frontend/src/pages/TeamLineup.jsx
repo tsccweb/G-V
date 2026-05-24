@@ -6,8 +6,10 @@ import {
   Music, Mic, Star, Headphones, Monitor, Trash2, Send, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import useAuthStore from '../store/authStore';
 import { getServices, inviteToLineup } from '../services/serviceService';
+import { getGroups } from '../services/groupService';
+import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -48,6 +50,12 @@ function TeamLineup() {
   const { data: services, isLoading: isServicesLoading } = useQuery({
     queryKey: ['services'],
     queryFn: getServices,
+    enabled: !!token
+  });
+
+  const { data: groups } = useQuery({
+    queryKey: ['groups'],
+    queryFn: getGroups,
     enabled: !!token
   });
 
@@ -94,6 +102,36 @@ function TeamLineup() {
     inviteMutation.mutate({ serviceId: selectedServiceId, email: inviteEmail, role: inviteRole });
   };
 
+  const handleAddFromGroup = async (groupId) => {
+    if (!selectedServiceId) return toast.error('Please select a service first.');
+    const group = groups?.find(g => g.id === groupId);
+    if (!group) return;
+
+    try {
+      // Get full group details to get member emails
+      const res = await axios.get(`${API_URL}/groups/${groupId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const fullGroup = res.data;
+      
+      if (!fullGroup.members?.length) return toast.error('Group has no members.');
+
+      toast.promise(
+        Promise.all(fullGroup.members.map(member => 
+          inviteToLineup({ serviceId: selectedServiceId, email: member.email, role: inviteRole })
+        )),
+        {
+          loading: `Inviting ${fullGroup.members.length} members...`,
+          success: 'Group members invited successfully!',
+          error: 'Some invitations failed. They might already be invited.'
+        }
+      );
+      setShowInvite(false);
+    } catch (err) {
+      toast.error('Failed to process group invitation.');
+    }
+  };
+
   if (isInvitesLoading || isServicesLoading) return (
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-white/10 border-t-white rounded-full animate-spin" />
@@ -103,18 +141,23 @@ function TeamLineup() {
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-12 pb-32">
       {/* Header Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-2"
-      >
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">
-          Team & <span className="text-zinc-500">Invitations</span>
-        </h1>
-        <p className="text-zinc-500 max-w-xl">
-          Manage your worship ministry team, send invitations, and track member status across your services.
-        </p>
-      </motion.div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">
+              Team & <span className="text-zinc-500">Invitations</span>
+            </h1>
+            <p className="text-zinc-500 max-w-xl">
+              Manage your worship ministry team, send invitations, and track member status across your services.
+            </p>
+          </div>
+          <Link 
+            to="/groups"
+            className="hidden md:flex items-center gap-3 px-6 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-2xl transition-all group"
+          >
+            <Users size={18} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-black uppercase tracking-widest text-zinc-300">Manage Groups</span>
+          </Link>
+        </div>
 
       {/* Invitations Section */}
       <section className="space-y-6">
@@ -344,7 +387,24 @@ function TeamLineup() {
                   </select>
                 </div>
                 <div className="md:col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Member Email</label>
+                  <div className="flex items-center justify-between px-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Member Email</label>
+                    {groups?.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-tighter">OR ADD FROM GROUP:</span>
+                        <select 
+                          onChange={(e) => {
+                            if (e.target.value) handleAddFromGroup(e.target.value);
+                            e.target.value = "";
+                          }}
+                          className="bg-emerald-500/10 border-none text-[10px] font-black text-emerald-500 uppercase px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-500/20 outline-none"
+                        >
+                          <option value="">SELECT GROUP...</option>
+                          {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
                   <input 
                     value={inviteEmail} 
                     onChange={e => setInviteEmail(e.target.value)}
