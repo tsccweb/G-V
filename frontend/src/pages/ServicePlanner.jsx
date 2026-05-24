@@ -12,6 +12,7 @@ import {
   updateServiceStatus
 } from '../services/serviceService';
 import { getSongs } from '../services/songService';
+import { getGroups, getGroupById } from '../services/groupService';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
   Info, GripVertical, Check, X, Trash2, Search, AlertTriangle,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -49,6 +51,9 @@ function ServicePlanner() {
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState('Vocalist');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [selectedGroupMemberIds, setSelectedGroupMemberIds] = useState([]);
+  const [memberRoles, setMemberRoles] = useState({});
   const [isSongModalOpen, setIsSongModalOpen] = useState(false);
   const [songSearchQuery, setSongSearchQuery] = useState('');
   const [selectedSongForFlow, setSelectedSongForFlow] = useState(null);
@@ -57,10 +62,28 @@ function ServicePlanner() {
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
 
-  const { data: songsData } = useQuery({
-    queryKey: ['songs'],
-    queryFn: getSongs
+  const { data: groups } = useQuery({
+    queryKey: ['groups'],
+    queryFn: getGroups,
+    enabled: !!user
   });
+
+  const { data: selectedGroupDetails } = useQuery({
+    queryKey: ['group', selectedGroupId],
+    queryFn: () => getGroupById(selectedGroupId),
+    enabled: !!selectedGroupId
+  });
+
+  useEffect(() => {
+    if (selectedGroupDetails) {
+      setSelectedGroupMemberIds([]);
+      const defaultRoles = {};
+      selectedGroupDetails.members?.forEach(member => {
+        defaultRoles[member.id] = memberRoles[member.id] || 'MEMBER';
+      });
+      setMemberRoles(defaultRoles);
+    }
+  }, [selectedGroupDetails]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -108,6 +131,43 @@ function ServicePlanner() {
   const handleAssign = () => {
     if (!selectedUserId || !selectedRole) return;
     assignMutation.mutate({ serviceId: id, userId: selectedUserId, role: selectedRole });
+  };
+
+  const toggleGroupMember = (memberId) => {
+    setSelectedGroupMemberIds(prev => prev.includes(memberId)
+      ? prev.filter(id => id !== memberId)
+      : [...prev, memberId]
+    );
+  };
+
+  const handleGroupRoleChange = (memberId, role) => {
+    setMemberRoles(prev => ({ ...prev, [memberId]: role }));
+  };
+
+  const handleAddGroupMembers = async () => {
+    if (!selectedGroupDetails) return toast.error('Please select a valid group.');
+    if (selectedGroupMemberIds.length === 0) return toast.error('Select at least one group member.');
+
+    const assignedIds = new Set(service?.lineup?.map(member => member.user?.id).filter(Boolean));
+    const membersToAdd = selectedGroupDetails.members.filter(member =>
+      selectedGroupMemberIds.includes(member.id) && !assignedIds.has(member.id)
+    );
+
+    if (!membersToAdd.length) return toast.error('Selected members are already assigned to this service.');
+
+    try {
+      await Promise.all(membersToAdd.map(member => addToLineup({
+        serviceId: id,
+        userId: member.id,
+        role: memberRoles[member.id] || 'MEMBER'
+      })));
+      queryClient.invalidateQueries({ queryKey: ['services', id] });
+      setSelectedGroupMemberIds([]);
+      toast.success('Selected group members added to service.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to add group members.');
+    }
   };
 
   const addItemMutation = useMutation({
@@ -206,6 +266,8 @@ function ServicePlanner() {
       default: return <Info size={18} className="text-zinc-400" />;
     }
   };
+
+  const assignedUserIds = new Set(service?.lineup?.map(member => member.user?.id).filter(Boolean));
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8">
@@ -372,35 +434,114 @@ function ServicePlanner() {
             </div>
 
             {isAssigning && (
-              <div className="p-4 bg-black border border-zinc-800 rounded-2xl space-y-3">
-                <select
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
-                >
-                  {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
-                </select>
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
-                >
-                  <option value="Worship Leader">Worship Leader</option>
-                  <option value="Guitarist">Guitarist</option>
-                  <option value="Bassist">Bassist</option>
-                  <option value="Pianist">Pianist</option>
-                  <option value="Drummer">Drummer</option>
-                  <option value="Back up">Back up</option>
-                  <option value="Tambourine">Tambourine</option>
-                  <option value="Media Team">Media Team</option>
-                </select>
-                <button
-                  onClick={handleAssign}
-                  disabled={assignMutation.isPending}
-                  className="w-full flex items-center justify-center gap-2 py-2 bg-white text-black font-bold rounded-lg hover:bg-zinc-200"
-                >
-                  <Check size={16} /> <span>Assign Role</span>
-                </button>
+              <div className="p-4 bg-black border border-zinc-800 rounded-2xl space-y-4">
+                <div className="space-y-3">
+                  <label className="text-xs uppercase tracking-[0.2em] text-zinc-500">Select Group</label>
+                  <select
+                    value={selectedGroupId}
+                    onChange={(e) => setSelectedGroupId(e.target.value)}
+                    className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
+                  >
+                    <option value="">Choose a group</option>
+                    {groups?.map((group) => (
+                      <option key={group.id} value={group.id}>{group.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedGroupId && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Group Members</p>
+                        <p className="text-sm text-zinc-400">Choose members to add to this service lineup.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddGroupMembers}
+                        disabled={!selectedGroupDetails || selectedGroupDetails.members?.length === 0}
+                        className="px-3 py-2 bg-white text-black text-xs font-bold uppercase rounded-lg hover:bg-zinc-200"
+                      >
+                        Add Selected Members
+                      </button>
+                    </div>
+                    {selectedGroupDetails?.members?.length > 0 ? (
+                      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        {selectedGroupDetails.members.map((member) => {
+                          const isAssigned = assignedUserIds.has(member.id);
+                          const isSelected = selectedGroupMemberIds.includes(member.id);
+                          return (
+                            <div key={member.id} className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-950 border border-zinc-800">
+                              <label className={`flex items-center gap-3 flex-1 ${isAssigned ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  disabled={isAssigned}
+                                  onChange={() => toggleGroupMember(member.id)}
+                                  className="w-4 h-4 text-white bg-zinc-800 border-zinc-700 rounded"
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-sm font-bold text-white">{member.firstName} {member.lastName}</p>
+                                  <p className="text-xs text-zinc-500">{member.email}</p>
+                                </div>
+                              </label>
+                              <select
+                                disabled={isAssigned}
+                                value={memberRoles[member.id] || 'Worship Leader'}
+                                onChange={(e) => handleGroupRoleChange(member.id, e.target.value)}
+                                className="w-32 bg-zinc-900 text-white px-2 py-2 rounded-lg border border-zinc-700 text-xs focus:outline-none"
+                              >
+                                <option value="Worship Leader">Worship Leader</option>
+                                <option value="Guitarist">Guitarist</option>
+                                <option value="Bassist">Bassist</option>
+                                <option value="Pianist">Pianist</option>
+                                <option value="Drummer">Drummer</option>
+                                <option value="Back up">Back up</option>
+                                <option value="Tambourine">Tambourine</option>
+                                <option value="Media Team">Media Team</option>
+                              </select>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-zinc-500">Select a group to review members.</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="border-t border-zinc-800 pt-4 space-y-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Or assign an individual member</p>
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
+                  >
+                    <option value="">Select a person</option>
+                    {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
+                  </select>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="w-full bg-zinc-900 text-white px-3 py-2 rounded-lg border border-zinc-700 text-sm focus:outline-none"
+                  >
+                    <option value="Worship Leader">Worship Leader</option>
+                    <option value="Guitarist">Guitarist</option>
+                    <option value="Bassist">Bassist</option>
+                    <option value="Pianist">Pianist</option>
+                    <option value="Drummer">Drummer</option>
+                    <option value="Back up">Back up</option>
+                    <option value="Tambourine">Tambourine</option>
+                    <option value="Media Team">Media Team</option>
+                  </select>
+                  <button
+                    onClick={handleAssign}
+                    disabled={assignMutation.isPending}
+                    className="w-full flex items-center justify-center gap-2 py-2 bg-white text-black font-bold rounded-lg hover:bg-zinc-200"
+                  >
+                    <Check size={16} /> <span>Assign Role</span>
+                  </button>
+                </div>
               </div>
             )}
 
