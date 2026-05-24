@@ -6,6 +6,7 @@ import {
   Music, Mic, Star, Headphones, Monitor, Trash2, Send, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import useAuthStore from '../store/authStore';
 import { getServices, inviteToLineup } from '../services/serviceService';
 import { getGroups } from '../services/groupService';
 import { Link } from 'react-router-dom';
