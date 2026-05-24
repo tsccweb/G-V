@@ -136,7 +136,7 @@ function Dashboard() {
                 {[
                   { icon: <LayoutList size={16} />, text: 'Service Planning & Scheduling' },
                   { icon: <Radio size={16} />, text: 'Live Worship Broadcasting' },
-                  { icon: <Users size={16} />, text: 'Team Lineup Management' },
+                  { icon: <Users size={16} />, text: 'Group Lineup Management' },
                   { icon: <Music size={16} />, text: 'Unlimited Song Library' },
                 ].map((feat, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-2xl border border-white/[0.04]">
@@ -304,7 +304,7 @@ function Dashboard() {
               <Users size={24} />
             </div>
             <div>
-              <span className="text-xl font-black text-white uppercase tracking-tighter block mb-1">Ministry Team</span>
+              <span className="text-xl font-black text-white uppercase tracking-tighter block mb-1">Ministry Groups</span>
               <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">CONNECT & COLLABORATE</p>
             </div>
           </div>
@@ -328,7 +328,7 @@ function Dashboard() {
             <div className="max-w-md">
               <h3 className="text-2xl font-black text-white italic mb-2 tracking-tight">Unlock Service Planning</h3>
               <p className="text-zinc-500 text-sm font-medium leading-relaxed">
-                Connect your repertoire to actual services, schedule your team, and manage live flows in real-time. Upgrade your ministry today.
+                Connect your repertoire to actual services, schedule your groups, and manage live flows in real-time. Upgrade your ministry today.
               </p>
             </div>
             <Link to="/pricing" className="px-8 py-4 bg-white text-black rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-3">

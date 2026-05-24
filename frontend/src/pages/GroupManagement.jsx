@@ -118,14 +118,14 @@ function GroupManagement() {
             className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors group text-xs font-black uppercase tracking-widest"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            Back to Team
+            Back to Groups
           </button>
           <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">
               Ministry <span className="text-emerald-500">Groups</span>
             </h1>
             <p className="text-zinc-500 max-w-xl text-sm font-medium">
-              Organize your team members into reusable groups for faster service scheduling and bulk invitations.
+              Organize your group members into reusable groups for faster service scheduling and bulk invitations.
             </p>
           </div>
         </div>
@@ -203,7 +203,7 @@ function GroupManagement() {
                 <div className="w-16 h-16 bg-zinc-900 rotate-12 rounded-3xl flex items-center justify-center mx-auto border border-zinc-800">
                   <Info size={32} className="text-zinc-700" />
                 </div>
-                <p className="text-zinc-500 font-medium max-w-xs mx-auto">You haven't created any groups yet. Start by creating your first ministry team.</p>
+                <p className="text-zinc-500 font-medium max-w-xs mx-auto">You haven't created any groups yet. Start by creating your first ministry group.</p>
               </div>
             )}
           </div>

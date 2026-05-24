@@ -428,11 +428,11 @@ function ServicePlanner() {
           </DragDropContext>
         </div>
 
-        {/* Team Lineup Column */}
+        {/* Group Lineup Column */}
         <div className="space-y-6">
           <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl space-y-6 shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Team Lineup</h2>
+              <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Group Lineup</h2>
               {user?.id === service?.userId && (
                 <button onClick={() => setIsAssigning(!isAssigning)} className="text-zinc-300 hover:text-white">
                   {isAssigning ? <X size={20} /> : <Plus size={20} />}
@@ -580,7 +580,7 @@ function ServicePlanner() {
                   </div>
                 ))
               ) : (
-                <p className="text-center text-zinc-500 text-sm py-4">No team members assigned yet.</p>
+                <p className="text-center text-zinc-500 text-sm py-4">No group members assigned yet.</p>
               )}
             </div>
           </div>
@@ -711,7 +711,7 @@ function ServicePlanner() {
               <Trash2 size={24} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white mb-2">Remove Team Member?</h3>
+              <h3 className="text-xl font-bold text-white mb-2">Remove Group Member?</h3>
               <p className="text-sm text-zinc-400">
                 Are you sure you want to remove <span className="text-white font-bold">{memberToRemove.user?.firstName} {memberToRemove.user?.lastName}</span> from the lineup? They will no longer be assigned as {memberToRemove.role}.
               </p>

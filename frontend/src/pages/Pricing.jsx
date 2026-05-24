@@ -21,7 +21,7 @@ const plans = [
     icon: Star,
     color: 'bg-emerald-500/10 text-emerald-400',
     popular: true,
-    features: ['Unlimited songs', 'Services & Planning', 'Team Lineup & Roles', 'Worship Flow Planner', 'Live Worship Mode', 'Song Import (File/Web)'],
+    features: ['Unlimited songs', 'Services & Planning', 'Group Lineup & Roles', 'Worship Flow Planner', 'Live Worship Mode', 'Song Import (File/Web)'],
   },
 ];
 

@@ -79,7 +79,7 @@ function Register() {
         <div className="p-8 md:p-12 bg-zinc-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-2xl space-y-8">
           <div className="space-y-1">
             <h3 className="text-2xl font-bold tracking-tight">Create Account</h3>
-            <p className="text-zinc-500 text-sm">Join the team and start managing your worship flows.</p>
+            <p className="text-zinc-500 text-sm">Join the group and start managing your worship flows.</p>
           </div>
 
           <AnimatePresence mode="wait">
@@ -190,7 +190,7 @@ function Register() {
         </div>
 
         <p className="text-center mt-12 text-sm text-zinc-500 font-medium">
-          Already a team member?{' '}
+          Already a group member?{' '}
           <Link to="/login" className="text-white font-black hover:underline underline-offset-4 decoration-2">
             {'Sign In'}
           </Link>

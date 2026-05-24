@@ -145,10 +145,10 @@ function TeamLineup() {
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">
-              Team & <span className="text-zinc-500">Invitations</span>
+              Groups & <span className="text-zinc-500">Invitations</span>
             </h1>
             <p className="text-zinc-500 max-w-xl">
-              Manage your worship ministry team, send invitations, and track member status across your services.
+              Manage your worship ministry groups, send invitations, and track member status across your services.
             </p>
           </div>
           <Link 
@@ -242,7 +242,7 @@ function TeamLineup() {
         <div className="flex items-center justify-between pb-2 border-b border-zinc-800/50">
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
             <Shield size={14} className="text-blue-500" />
-            Your Teams per Service
+            Your Groups per Service
           </h2>
           <span className="px-2 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500">
             {services?.length || 0} Services
@@ -375,7 +375,7 @@ function TeamLineup() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Team Member Role</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Group Member Role</label>
                   <select 
                     value={inviteRole} 
                     onChange={e => setInviteRole(e.target.value)}
