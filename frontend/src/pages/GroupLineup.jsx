@@ -8,8 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import { getServices, inviteToLineup } from '../services/serviceService';
-import { getGroups, addMembersToGroup } from '../services/groupService';
-import { getUsers } from '../services/authService';
+import { getGroups } from '../services/groupService';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -22,17 +21,14 @@ const roleIcons = {
   PASTOR: <Shield size={16} />,
 };
 
-function GroupInvitations() {
+function GroupLineup() {
   const { user, token } = useAuthStore();
   const queryClient = useQueryClient();
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('MEMBER');
   const [selectedServiceId, setSelectedServiceId] = useState(null);
-  const [selectedGroupId, setSelectedGroupId] = useState(null);
-  const [selectedUserId, setSelectedUserId] = useState('');
   const [inviteMsg, setInviteMsg] = useState(null);
-  const [groupInviteMsg, setGroupInviteMsg] = useState(null);
 
   const { data: invitations, isLoading: isInvitesLoading } = useQuery({
     queryKey: ['invitations'],
@@ -51,12 +47,6 @@ function GroupInvitations() {
     enabled: !!token
   });
 
-  const { data: users } = useQuery({
-    queryKey: ['users'],
-    queryFn: getUsers,
-    enabled: !!token
-  });
-
   const { data: groups } = useQuery({
     queryKey: ['groups'],
     queryFn: getGroups,
@@ -70,12 +60,6 @@ function GroupInvitations() {
       setSelectedServiceId(ownedServices[0].id);
     }
   }, [ownedServices, selectedServiceId]);
-
-  useEffect(() => {
-    if (!selectedGroupId && groups?.length > 0) {
-      setSelectedGroupId(groups[0].id);
-    }
-  }, [groups, selectedGroupId]);
 
   const inviteMutation = useMutation({
     mutationFn: (data) => inviteToLineup(data),
@@ -103,27 +87,6 @@ function GroupInvitations() {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
     }
   });
-
-  const addGroupMembersMutation = useMutation({
-    mutationFn: ({ groupId, memberIds }) => addMembersToGroup(groupId, memberIds),
-    onSuccess: () => {
-      setGroupInviteMsg({ ok: true, t: 'User added to the group successfully' });
-      setTimeout(() => setGroupInviteMsg(null), 3000);
-      setSelectedUserId('');
-      queryClient.invalidateQueries({ queryKey: ['groups'] });
-    },
-    onError: (error) => {
-      setGroupInviteMsg({ ok: false, t: error.response?.data?.error || 'Failed to add user to group' });
-    }
-  });
-
-  const handleAddUserToGroup = () => {
-    if (!selectedGroupId || !selectedUserId) {
-      setGroupInviteMsg({ ok: false, t: 'Please select a group and a user.' });
-      return;
-    }
-    addGroupMembersMutation.mutate({ groupId: selectedGroupId, memberIds: [selectedUserId] });
-  };
 
   const handleInviteSubmit = () => {
     if (!inviteEmail || !selectedServiceId) {
@@ -267,67 +230,6 @@ function GroupInvitations() {
         </AnimatePresence>
       </section>
 
-      {/* Invite Users to Group Section */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/50">
-          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-            <UserPlus size={14} className="text-emerald-500" />
-            Invite Users to a Group
-          </h2>
-          <span className="px-2 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500">
-            {groups?.length || 0} Groups
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select Group</label>
-            <select
-              value={selectedGroupId || ''}
-              onChange={(e) => setSelectedGroupId(e.target.value)}
-              className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
-            >
-              {!groups?.length && <option value="">No groups available</option>}
-              {groups?.map((group) => (
-                <option key={group.id} value={group.id}>{group.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select User</label>
-            <select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
-            >
-              <option value="">Choose a user</option>
-              {users?.map((userOption) => (
-                <option key={userOption.id} value={userOption.id}>
-                  {userOption.firstName} {userOption.lastName} – {userOption.email}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-end">
-            <button
-              onClick={handleAddUserToGroup}
-              disabled={!selectedGroupId || !selectedUserId || addGroupMembersMutation.isLoading}
-              className="w-full py-4 bg-white text-black font-black rounded-3xl hover:bg-zinc-200 transition-all shadow-xl shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {addGroupMembersMutation.isLoading ? 'Inviting...' : 'Invite to Group'}
-            </button>
-          </div>
-        </div>
-
-        {groupInviteMsg && (
-          <div className={`p-4 rounded-2xl text-xs font-bold border ${groupInviteMsg.ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-            {groupInviteMsg.t}
-          </div>
-        )}
-      </section>
-
       {/* Invite Floating Panel */}
       <AnimatePresence>
         {showInvite && (
@@ -441,4 +343,4 @@ function GroupInvitations() {
   );
 }
 
-export default GroupInvitations;
+export default GroupLineup;

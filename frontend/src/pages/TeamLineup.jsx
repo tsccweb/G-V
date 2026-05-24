@@ -3,13 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
   Mail, Check, X, UserPlus, Clock, Users, Shield, 
-  Music, Mic, Star, Headphones, Monitor, Trash2, Send
+  Music, Mic, Star, Headphones, Monitor, Trash2, Send, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import { getServices, inviteToLineup } from '../services/serviceService';
-import { getGroups, addMembersToGroup } from '../services/groupService';
-import { getUsers } from '../services/authService';
+import { getGroups } from '../services/groupService';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -22,17 +21,21 @@ const roleIcons = {
   PASTOR: <Shield size={16} />,
 };
 
-function GroupInvitations() {
+function GroupLineup() {
   const { user, token } = useAuthStore();
   const queryClient = useQueryClient();
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('MEMBER');
   const [selectedServiceId, setSelectedServiceId] = useState(null);
-  const [selectedGroupId, setSelectedGroupId] = useState(null);
-  const [selectedUserId, setSelectedUserId] = useState('');
   const [inviteMsg, setInviteMsg] = useState(null);
-  const [groupInviteMsg, setGroupInviteMsg] = useState(null);
+  const [expandedServices, setExpandedServices] = useState([]);
+
+  const toggleService = (id) => {
+    setExpandedServices(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   const { data: invitations, isLoading: isInvitesLoading } = useQuery({
     queryKey: ['invitations'],
@@ -51,12 +54,6 @@ function GroupInvitations() {
     enabled: !!token
   });
 
-  const { data: users } = useQuery({
-    queryKey: ['users'],
-    queryFn: getUsers,
-    enabled: !!token
-  });
-
   const { data: groups } = useQuery({
     queryKey: ['groups'],
     queryFn: getGroups,
@@ -70,12 +67,6 @@ function GroupInvitations() {
       setSelectedServiceId(ownedServices[0].id);
     }
   }, [ownedServices, selectedServiceId]);
-
-  useEffect(() => {
-    if (!selectedGroupId && groups?.length > 0) {
-      setSelectedGroupId(groups[0].id);
-    }
-  }, [groups, selectedGroupId]);
 
   const inviteMutation = useMutation({
     mutationFn: (data) => inviteToLineup(data),
@@ -101,29 +92,6 @@ function GroupInvitations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
       queryClient.invalidateQueries({ queryKey: ['groups'] });
-    }
-  });
-
-  const addGroupMembersMutation = useMutation({
-    mutationFn: ({ groupId, memberIds }) => addMembersToGroup(groupId, memberIds),
-    onSuccess: () => {
-      setGroupInviteMsg({ ok: true, t: 'User added to the group successfully' });
-      setTimeout(() => setGroupInviteMsg(null), 3000);
-      setSelectedUserId('');
-      queryClient.invalidateQueries({ queryKey: ['groups'] });
-    },
-    onError: (error) => {
-      setGroupInviteMsg({ ok: false, t: error.response?.data?.error || 'Failed to add user to group' });
-    }
-  });
-
-  const handleAddUserToGroup = () => {
-    if (!selectedGroupId || !selectedUserId) {
-      setGroupInviteMsg({ ok: false, t: 'Please select a group and a user.' });
-      return;
-    }
-    addGroupMembersMutation.mutate({ groupId: selectedGroupId, memberIds: [selectedUserId] });
-  };
 
   const handleInviteSubmit = () => {
     if (!inviteEmail || !selectedServiceId) {
@@ -178,7 +146,7 @@ function GroupInvitations() {
               Groups & <span className="text-zinc-500">Invitations</span>
             </h1>
             <p className="text-zinc-500 max-w-xl">
-              Manage your worship ministry groups, send invitations, and track member status in one place.
+              Manage your worship ministry groups, send invitations, and track member status across your services.
             </p>
           </div>
           <Link 
@@ -267,65 +235,112 @@ function GroupInvitations() {
         </AnimatePresence>
       </section>
 
-      {/* Invite Users to Group Section */}
-      <section className="space-y-6">
+      {/* Group Services Section */}
+      <section className="space-y-12">
         <div className="flex items-center justify-between pb-2 border-b border-zinc-800/50">
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-            <UserPlus size={14} className="text-emerald-500" />
-            Invite Users to a Group
+            <Shield size={14} className="text-blue-500" />
+            Your Groups per Service
           </h2>
           <span className="px-2 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500">
-            {groups?.length || 0} Groups
+            {services?.length || 0} Services
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select Group</label>
-            <select
-              value={selectedGroupId || ''}
-              onChange={(e) => setSelectedGroupId(e.target.value)}
-              className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
+        <div className="space-y-16">
+          {services?.map((service, sIdx) => (
+            <motion.div 
+              key={service.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: sIdx * 0.1 }}
+              className="group bg-zinc-900/20 border border-zinc-800/50 rounded-[2.5rem] overflow-hidden hover:border-zinc-700/50 transition-colors"
             >
-              {!groups?.length && <option value="">No groups available</option>}
-              {groups?.map((group) => (
-                <option key={group.id} value={group.id}>{group.name}</option>
-              ))}
-            </select>
-          </div>
+              {/* Service Header - Clickable */}
+              <button 
+                onClick={() => toggleService(service.id)}
+                className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 p-8 text-left hover:bg-zinc-800/20 transition-colors"
+              >
+                <div>
+                  <h3 className="text-2xl font-black text-white group-hover:text-blue-400 transition-colors">
+                    {service.title || 'Untitled Service'}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1 text-zinc-500">
+                    <span className="text-xs font-bold uppercase tracking-wider">Created BY:</span>
+                    <span className="text-xs font-black text-zinc-300">
+                      {service.createdBy ? `${service.createdBy.firstName} ${service.createdBy.lastName}` : 'System'}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                    <span className="text-xs text-zinc-400">{new Date(service.date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="px-3 py-1.5 bg-zinc-900/50 border border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    {service.lineup?.length || 0} Members
+                  </div>
+                  <motion.div
+                    animate={{ rotate: expandedServices.includes(service.id) ? 180 : 0 }}
+                    className="text-zinc-600"
+                  >
+                    <ChevronRight size={20} className="rotate-90" />
+                  </motion.div>
+                </div>
+              </button>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Select User</label>
-            <select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all appearance-none"
-            >
-              <option value="">Choose a user</option>
-              {users?.map((userOption) => (
-                <option key={userOption.id} value={userOption.id}>
-                  {userOption.firstName} {userOption.lastName} – {userOption.email}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-end">
-            <button
-              onClick={handleAddUserToGroup}
-              disabled={!selectedGroupId || !selectedUserId || addGroupMembersMutation.isLoading}
-              className="w-full py-4 bg-white text-black font-black rounded-3xl hover:bg-zinc-200 transition-all shadow-xl shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {addGroupMembersMutation.isLoading ? 'Inviting...' : 'Invite to Group'}
-            </button>
-          </div>
+              {/* Members Content Area */}
+              <AnimatePresence>
+                {expandedServices.includes(service.id) && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  >
+                    <div className="p-8 pt-0 space-y-6">
+                      <div className="h-px bg-zinc-800/50 w-full" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {service.lineup?.map((member) => (
+                          <div
+                            key={member.id}
+                            className="p-5 bg-zinc-950/40 border border-zinc-800/50 rounded-[2rem] hover:bg-zinc-900/50 hover:border-zinc-700/50 transition-all duration-300"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="relative">
+                                <div className="w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center font-black text-xl text-zinc-600 uppercase">
+                                  {member.user?.firstName?.[0] || '?'}
+                                </div>
+                                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-4 border-zinc-900 ${member.status === 'ACCEPTED' ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-700'}`} />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-bold text-white capitalize">
+                                  {member.user ? `${member.user.firstName} ${member.user.lastName}` : 'Invited Member'}
+                                </h4>
+                                <div className="flex items-center gap-1.5 mt-0.5 text-zinc-500">
+                                  {roleIcons[member.role] || <Users size={12}/>}
+                                  <span className="text-[10px] font-black uppercase tracking-wider">{member.role}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {(!service.lineup || service.lineup.length === 0) && (
+                          <div className="col-span-full py-10 text-center bg-zinc-900/10 border border-zinc-800/30 border-dashed rounded-[2rem] text-zinc-600 text-sm">
+                            No members have been added to this service yet.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+          {(!services || services.length === 0) && (
+            <div className="py-20 text-center bg-zinc-900/20 border border-zinc-800 rounded-[3rem]">
+              <p className="text-zinc-500">You are not involved in any active services.</p>
+            </div>
+          )}
         </div>
-
-        {groupInviteMsg && (
-          <div className={`p-4 rounded-2xl text-xs font-bold border ${groupInviteMsg.ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-            {groupInviteMsg.t}
-          </div>
-        )}
       </section>
 
       {/* Invite Floating Panel */}
@@ -441,4 +456,4 @@ function GroupInvitations() {
   );
 }
 
-export default GroupInvitations;
+export default GroupLineup;
