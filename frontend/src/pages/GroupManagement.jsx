@@ -233,19 +233,28 @@ function GroupManagement() {
             {showCreate ? (
               <motion.div
                 key="form"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="p-8 bg-zinc-900/50 backdrop-blur-3xl border border-white/5 rounded-[3rem] sticky top-32 space-y-8"
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className={editingGroup ? 'fixed inset-0 z-50 flex items-center justify-center p-4' : 'p-8 bg-zinc-900/50 backdrop-blur-3xl border border-white/5 rounded-[3rem] sticky top-32 space-y-8'}
               >
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-black text-white uppercase tracking-tight">
-                    {editingGroup ? 'Edit' : 'New'} <span className="text-emerald-500">Group</span>
-                  </h2>
-                  <button onClick={resetForm} className="p-2 hover:bg-white/10 rounded-xl text-zinc-500 hover:text-white transition-all">
-                    <X size={20} />
-                  </button>
-                </div>
+                {editingGroup && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                  />
+                )}
+                <div className={editingGroup ? 'relative z-10 w-full max-w-2xl p-8 bg-zinc-900/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] space-y-8 shadow-2xl' : ''}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight">
+                      {editingGroup ? 'Edit' : 'New'} <span className="text-emerald-500">Group</span>
+                    </h2>
+                    <button onClick={resetForm} className="p-2 hover:bg-white/10 rounded-xl text-zinc-500 hover:text-white transition-all">
+                      <X size={20} />
+                    </button>
+                  </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
@@ -337,7 +346,8 @@ function GroupManagement() {
                     {editingGroup ? 'UPDATE GROUP' : 'SAVE GROUP'}
                   </button>
                 </form>
-              </motion.div>
+              </div>
+            </motion.div>
             ) : (
               <div className="p-10 border border-zinc-800/50 border-dashed rounded-[3rem] sticky top-32 flex flex-col items-center text-center space-y-6">
                 <div className="w-20 h-20 bg-zinc-900/50 rounded-full flex items-center justify-center border border-zinc-800">
