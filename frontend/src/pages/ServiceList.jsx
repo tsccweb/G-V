@@ -60,7 +60,6 @@ function ServiceList() {
     serviceDate.setHours(0, 0, 0, 0);
     return serviceDate < today;
   });
-  const totalMembers = services?.reduce((sum, s) => sum + (s.lineup?.length || 0), 0) || 0;
 
   const ServiceCard = ({ service, isPast }) => {
     const date = new Date(service.date);
@@ -204,29 +203,10 @@ function ServiceList() {
             }`}
           >
             <Clock size={16} />
-            {view === 'history' && <span>Back to Active</span>}
+            {view === 'history' && <span></span>}
           </button>
         </div>
 
-        {/* Mini Stats */}
-        <div className="flex gap-3">
-          <div className="flex-1 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-center">
-            <p className="text-2xl font-black text-white">{services?.length || 0}</p>
-            <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500 mt-1">Total</p>
-          </div>
-          <div className="flex-1 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-center">
-            <p className="text-2xl font-black text-amber-400">{todayServices.length}</p>
-            <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500 mt-1">Today</p>
-          </div>
-          <div className="flex-1 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-center">
-            <p className="text-2xl font-black text-emerald-400">{upcoming.length}</p>
-            <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500 mt-1">Upcoming</p>
-          </div>
-          <div className="flex-1 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-center">
-            <p className="text-2xl font-black text-white">{totalMembers}</p>
-            <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500 mt-1">Lineup</p>
-          </div>
-        </div>
       </div>
 
       {/* Conditional Content */}
